@@ -1,0 +1,691 @@
+-- unit needs to have 2 filters: timer, start()
+-- for timer filter set its name as updateTable and inside needs to contain generateHtml()
+-- start filter needs to contain all of this code
+
+
+hub = 1075400 --export: This is the total volume of your hub, at present, all hubs need to be the same
+containerProficiency = 20 --export: This is the % voume increase of your Container Proficiency talent
+containerOptimization = 0 --export: This is the % mass decrease of your Container Optimization talent
+
+
+sortedOres = {}
+ores = {}
+pures = {}
+
+screens = {}
+core = nil
+databank = nill
+
+fontBigSize = "90px"
+fontSize = "50px"
+fontSizeBigMini = "60px"
+fontSizeMini = "40px"
+
+barWidth = 290
+barWidthBig = 450
+barHeight = 60
+barHeightBig = 90
+lineGap = 60
+lineGapBig = 90
+
+screenWidth = 1920
+screenHeight = 1150
+
+function round(number,decimals)
+  local power = 10^decimals
+  return math.floor((number/1000) * power) / power
+end
+
+function ContainerMaxVol(hp)
+  if hp > 49 and hp <=123 then vol = hub
+  elseif hp > 123 and hp <= 998 then vol = (1000+(1000*(containerProficiency/100)))
+  elseif hp > 998 and hp <= 7996 then vol = (8000+(8000*(containerProficiency/100)))
+  elseif hp > 7996 and hp <= 17315 then vol = (64000+(64000*(containerProficiency/100)))
+  elseif hp > 17315 then vol = (128000+(128000*(containerProficiency/100)))
+  end
+  return vol
+end
+
+function ContainerSelfMass(hp)
+  if hp > 49 and hp <=123 then sm = 0
+  elseif hp > 123 and hp <= 998 then sm = 229.09
+  elseif hp > 998 and hp <= 7996 then sm = 1280
+  elseif hp > 7996 and hp <= 17315 then sm = 7420
+  elseif hp > 17315 then sm = 14840
+  end
+  return sm
+end
+
+function addPure(pure)
+  pures[string.lower("Pure "..pure.name)] = pure
+end
+
+function addOre(ore)
+  ores[string.lower(ore.name.." Ore")] = ore
+  sortedOres[#sortedOres+1] = ore
+  addPure(ore.into)
+end
+
+addPure({name = "Oxygen", tier = 1, weight = 1})
+addPure({name = "Hydrogen", tier = 1, weight = 0.07})
+
+addOre({name = "Bauxite", tier = 1, weight = 1.28, into = {name = "Aluminium", weight = 2.65}})
+addOre({name = "Coal", tier = 1, weight = 1.35, into = {name = "Carbon", weight = 2.27}})
+addOre({name = "Hematite", tier = 1, weight = 5.04,  into = {name = "Iron", weight = 7.85}})
+addOre({name = "Quartz", tier = 1, weight = 2.65,  into = {name = "Silicon", weight = 2.33}})
+
+addOre({name = "Chromite", tier = 2, weight = 4.54,  into = {name = "Chromium", weight = 7.19}})
+addOre({name = "Malachite", tier = 2, weight = 4.00,  into = {name = "Copper", weight = 8.96}})
+addOre({name = "Limestone", tier = 2, weight = 2.71,  into = {name = "Calcium", weight = 1.55}})
+addOre({name = "Natron", tier = 2, weight = 1.55,  into = {name = "Sodium", weight = 0.97}})
+
+addOre({name = "Garnierite", tier = 3, weight = 2.60,  into = {name = "Nickel", weight = 8.91}})
+addOre({name = "Petalite", tier = 3, weight = 2.41,  into = {name = "Lithium", weight = 0.53}})
+addOre({name = "Acanthite", tier = 3, weight = 7.20,  into = {name = "Silver", weight = 10.49}})
+addOre({name = "Pyrite", tier = 3, weight = 5.01,  into = {name = "Sulfur", weight = 1.82}})
+
+addOre({name = "Cobaltite", tier = 4, weight = 6.33,  into = {name = "Cobalt", weight = 8.90}})
+addOre({name = "Cryolite", tier = 4, weight = 2.95,  into = {name = "Fluorine", weight = 1.70}})
+addOre({name = "Gold nuggets", tier = 4, weight = 19.30,  into = {name = "Gold", weight = 19.30}})
+addOre({name = "Kolbeckite", tier = 4, weight = 2.37,  into = {name = "Scandium", weight = 2.98}})
+
+addOre({name = "Rhodonite", tier = 5, weight = 3.76,  into = {name = "Manganese", weight = 7.21}})
+addOre({name = "Columbite", tier = 5, weight = 5.38,  into = {name = "Niobium", weight = 8.57}})
+addOre({name = "Illmenite", tier = 5, weight = 4.55,  into = {name = "Titanium", weight = 4.51}})
+addOre({name = "Vanadinite", tier = 5, weight = 6.95,  into = {name = "Vanadium", weight = 6.0}})
+
+
+
+
+
+for key, value in pairs(unit) do
+  if type(value) == "table" and type(value.export) == "table" then
+    if value.getElementClass then
+      if value.getElementClass() == "ScreenUnit" then
+        screens[#screens + 1] = {screen = value, slot = key, settings = {verticalView = true, generatebackground = true}, button = {x = 0, y = 0, size = 100}, tiers = {}, showTier = -1}
+      elseif value.getElementClass() == "CoreUnitStatic" then
+        core = value
+      elseif value.getElementClass() == "DataBankUnit" then
+        databank = value
+      end
+    end
+  end
+end
+
+unit.hide()
+
+function split(s, delimiter)
+  result = {};
+  for match in (s..delimiter):gmatch("(.-)"..delimiter) do
+    table.insert(result, match);
+  end
+  return result;
+end
+
+if databank then
+  for _,key in ipairs(json.decode(databank.getKeys())) do
+    value = databank.getIntValue(key)
+
+    for _,screenObject in ipairs(screens) do
+      if string.match(key, screenObject.slot) then
+
+        splitted = split(key, "_")
+        lastPart = splitted[#splitted]
+
+        if lastPart == "orent" then
+          screenObject.settings.verticalView = value == 1
+        elseif lastPart == "tier" then
+          system.print("recorded tier "..value)
+          screenObject.showTier = value
+        end
+      end
+    end
+  end
+end
+
+-- Turning on Screens
+for _,screenObject in ipairs(screens) do
+  screenObject.screen.activate()
+end
+
+function displayOff()
+  for _,screenObject in ipairs(screens) do
+    screenObject.screen.clear()
+  end
+end
+
+elementsIds = core.getElementIdList()
+
+for i = 1, #elementsIds do
+  local name = string.lower(core.getElementNameById(elementsIds[i]))
+  if string.match(core.getElementTypeById(elementsIds[i]), "ontainer") and (string.match(name," ore") or string.match(name,"pure ")) then
+    local got = ores[name]
+    if got == nil then
+      got = pures[name]
+    end
+    if got ~= nil then
+
+      if got.containers == nill then
+        got.containers = {}
+      end
+
+      hitPoints = core.getElementMaxHitPointsById(elementsIds[i])
+
+      got.containers[#got.containers+1] = {id = elementsIds[i], hitPoints = hitPoints, selfMass = ContainerSelfMass(hitPoints), maxVol = ContainerMaxVol(hitPoints)}
+    end
+  end
+end
+
+
+function OptimizedContainerMass(mass)
+  oMass = (mass+(mass*(containerOptimization/100)))
+  return oMass
+end
+
+function getRGB(percentage)
+  return {(255 * percentage) / 100, (255 * (100 - percentage)) / 100, 0}
+end
+
+function rgbToHex(rgb)
+  local hexadecimal = ''
+  for key, value in pairs(rgb) do
+    local hex = ''
+    while(value > 0)do
+      local index = math.floor(math.fmod(value, 16) + 1)
+      value = math.floor(value / 16)
+      hex = string.sub('0123456789ABCDEF', index, index) .. hex
+    end
+    if(string.len(hex) == 0)then
+      hex = '00'
+    elseif(string.len(hex) == 1)then
+      hex = '0' .. hex
+    end
+    hexadecimal = hexadecimal .. hex
+  end
+  return hexadecimal
+end
+
+function getHex(percentage)
+  return rgbToHex(getRGB(percentage))
+end
+
+
+function barGraphColor(percentage, invert)
+  if percentage == nil then percentage = 0 end
+  if invert then
+    return  getHex( percentage)
+  end
+  return  getHex(100 - percentage)
+end
+
+iconStyle = [[
+  <style>
+      text {
+      font-family: arial, candara, refrigerator, calibri;
+      stroke: #464646;
+      fill: #2D2D2D;
+    }  
+
+    .pBar {
+      stroke: #464646; 
+      stroke-width: 2;
+      fill: #D4CABD;
+    }  
+    
+    .mainText {
+      font-weight: bold;
+      font-size: ]]..fontSize..[[;
+      fill: #EBEEEE;
+    }      
+    
+    .mainBigText {
+      font-weight: bold;
+      font-size: ]]..fontBigSize..[[;
+      fill: #EBEEEE;
+    }
+    .mainTextRight {
+      text-anchor: end;
+    }  
+    .mainTextMiddle {
+      text-anchor: middle;
+    } 
+    
+    .svg-icon path,
+    .svg-icon polygon,
+    .svg-icon rect {
+      fill: #D4CABD;
+    }
+
+    .svg-icon circle {
+      stroke: #D4CABD;
+      stroke-width: 2;
+    }
+  </style>
+]]
+
+function generateLine(startingY, startingX, ore, percent, mass, invert, rightSide, textOnTop, generateBackground, single)
+  local line = ""
+  local background = ""
+
+  if percent > 100 then
+    percent = 100
+  end
+  if percent < 0 then
+    percent = 0
+  end
+
+  if single then
+
+    if textOnTop then
+      if generateBackground then
+        background = [[<text class="mainBigText mainTextMiddle" y="]]..(startingY-7)..[[" x="]]..(startingX - barWidthBig/2)..[[">]]..ore.name..[[</text>]]
+      end
+      startingY = startingY + barHeightBig-1
+    else
+      if generateBackground then
+        if rightSide then
+          background = [[<text class="mainBigText" y="]]..(startingY)..[[" x="]]..(startingX)..[[">]]..ore.name..[[</text>]]
+        else
+          background = [[<text class="mainBigText mainTextRight" y="]]..(startingY)..[[" x="]]..(startingX - barWidthBig - 10)..[[">]]..ore.name..[[</text>]]
+        end
+      end
+    end
+
+  else
+    if textOnTop then
+      if generateBackground then
+        background = [[<text class="mainText mainTextMiddle" y="]]..(startingY-7)..[[" x="]]..(startingX - barWidth/2)..[[">]]..ore.name..[[</text>]]
+      end
+      startingY = startingY + barHeight-1
+    else
+      if generateBackground then
+        if rightSide then
+          background = [[<text class="mainText" y="]]..(startingY)..[[" x="]]..(startingX)..[[">]]..ore.name..[[</text>]]
+        else
+          background = [[<text class="mainText mainTextRight" y="]]..(startingY)..[[" x="]]..(startingX - barWidth - 10)..[[">]]..ore.name..[[</text>]]
+        end
+      end
+    end
+  end
+
+  if generateBackground then
+    if single then
+      background = background..[[<rect class ="pBar" x="]]..(startingX - barWidthBig -5)..[[" y="]]..(5+(startingY)-barHeightBig)..[[" height="]]..barHeightBig..[[" width="]]..barWidthBig..[["/>]]
+    else
+      background = background..[[<rect class ="pBar" x="]]..(startingX - barWidth -5)..[[" y="]]..(5+(startingY)-barHeight)..[[" height="]]..barHeight..[[" width="]]..barWidth..[["/>]]
+    end
+  end
+
+  if single then
+    line = line..[[<rect class ="pBar" x="]]..(startingX - barWidthBig -5)..[[" y="]]..(5+(startingY)-barHeightBig)..[[" height="]]..barHeightBig..[[" width="]]..(percent * barWidthBig / 100)..[[" style="fill:#]]..barGraphColor(percent, invert)..[[;"/>]]
+    line = line..[[<text x="]]..(startingX-barWidthBig)..[[" y="]]..(startingY-2)..[[" font-size="]]..fontSizeBigMini..[[">]]..percent..[[%</text>]]
+    line = line..[[<text class = "thickOutlined" text-anchor="end" x="]]..(startingX - 6)..[[" y="]]..(startingY-2)..[[" font-size="]]..fontSizeBigMini..[[">]]..mass..[[KL</text>]]
+  else
+    line = line..[[<rect class ="pBar" x="]]..(startingX - barWidth -5)..[[" y="]]..(5+(startingY)-barHeight)..[[" height="]]..barHeight..[[" width="]]..(percent * barWidth / 100)..[[" style="fill:#]]..barGraphColor(percent, invert)..[[;"/>]]
+    line = line..[[<text x="]]..(startingX-barWidth)..[[" y="]]..(startingY-2)..[[" font-size="]]..fontSizeMini..[[">]]..percent..[[%</text>]]
+    line = line..[[<text class = "thickOutlined" text-anchor="end" x="]]..(startingX - 6)..[[" y="]]..(startingY-2)..[[" font-size="]]..fontSizeMini..[[">]]..mass..[[KL</text>]]
+  end
+  return line, background
+end
+
+function evaluateButtons(x, y, pressDown, unit)
+  x = screenWidth * x
+  y = screenHeight * y
+  for _,screenObject in ipairs(screens) do
+    if  screenObject.screen.getId() == unit.getId() then
+      if screenObject.button.x <= x and screenObject.button.x+ screenObject.button.size+100 >= x and screenObject.button.y <= y and screenObject.button.y+ screenObject.button.size+100 >= y and not pressDown then
+        screenObject.settings.verticalView = not screenObject.settings.verticalView
+        if databank then
+          if screenObject.settings.verticalView then
+            databank.setIntValue(screenObject.slot.."_orent", 1)
+          else
+            databank.setIntValue(screenObject.slot.."_orent", 0)
+          end
+          screenObject.settings.generatebackground = true
+        end
+        generateHtml()
+        break
+      end
+
+      oldTier = screenObject.showTier
+
+
+      if (screenObject.showTier == -1) then
+        for id,tiers in ipairs(screenObject.tiers) do
+          if tiers.x1 <= x and tiers.x2 >= x and tiers.y1 <= y and tiers.y2 >= y and not pressDown then
+            screenObject.showTier = id
+            if databank then
+              databank.setIntValue(screenObject.slot.."_tier", id)
+            end
+            break
+          end
+        end
+
+        if screenObject.tiers[0] and screenObject.tiers[0].x1 <= x and screenObject.tiers[0].x2 >= x and screenObject.tiers[0].y1 <= y and screenObject.tiers[0].y2 >= y and not pressDown then
+          screenObject.showTier = 0
+          if databank then
+            databank.setIntValue(screenObject.slot.."_tier", 0)
+          end
+        end
+      else
+        if databank then
+          databank.setIntValue(screenObject.slot.."_tier", -1)
+        end
+        screenObject.showTier = -1
+      end
+
+      if screenObject.showTier ~= oldTier then
+        screenObject.settings.generatebackground = true
+        generateHtml()
+      end
+
+    end
+  end
+end
+
+function getMass(element)
+  mass = 0
+  maxVol = 0
+  for _,container in ipairs(element.containers) do
+    mass = mass+round(math.ceil((OptimizedContainerMass(core.getElementMassById(container.id)) - container.selfMass) / element.weight), 1)
+    maxVol = maxVol + container.maxVol
+  end
+  return mass, maxVol
+end
+
+function generateHtml()
+
+  for id,screenObject in ipairs(screens) do
+
+
+    startingY = 0
+
+    if screenObject.settings.verticalView then
+      startingY = -((screenWidth - screenHeight) /2)
+    end
+
+    bhtml = ""
+
+    html = ""
+    html = html..[[<body >]]
+
+
+    html = html..[[<svg width="100vw" height="100vh" viewBox="0 0 ]]..screenWidth..[[ ]]..screenHeight..[[" xmlns="http://www.w3.org/2000/svg">]]
+
+    if screenObject.settings.verticalView then
+      html = html..[[<g transform="rotate(-90 ]]..(screenWidth/2)..[[ ]]..(screenHeight/2)..[[)">]]
+      if screenObject.settings.generatebackground then
+        bhtml = bhtml..[[<g transform="rotate(-90 ]]..(screenWidth/2)..[[ ]]..(screenHeight/2)..[[)">]]
+      end
+    end
+
+    if screenObject.settings.verticalView then
+
+      if screenObject.settings.generatebackground then
+        bhtml = bhtml..[[<rect fill="#2C3735" id="canvas_background" height="]]..screenWidth..[[" width="]]..screenHeight..[[" y="]]..startingY..[[" x="]]..((screenWidth - screenHeight) /2)..[["/>]]
+      end
+      startingY =  startingY + 70
+    else
+      if screenObject.settings.generatebackground then
+        bhtml = bhtml..[[<rect fill="#2C3735" id="canvas_background" height="]]..screenHeight..[[" width="]]..screenWidth..[[" y="0" x="0"/>]]
+      end
+    end
+
+
+    single = screenObject.showTier ~= -1
+
+    line = 1
+
+    textOnTop = not screenObject.settings.verticalView and not single or screenObject.settings.verticalView and single
+
+
+    if single then
+      startingY = screenHeight/2
+    end
+
+    if screenObject.showTier == -1 or screenObject.showTier == 0 then
+      oxygen = pures[string.lower("Pure Oxygen")]
+
+      if oxygen.containers ~= nil then
+        local pure = oxygen
+        massPure, maxVol = getMass(pure)
+        percentPure = math.ceil(((math.ceil((massPure * 1000) - 0.5) / maxVol)*100))
+
+
+
+        mainhtml, backc = generateLine(startingY + lineGap, screenWidth/2, pure, percentPure, massPure, true, false, single, screenObject.settings.generatebackground, single)
+        html = html..mainhtml
+
+        bhtml = bhtml..backc
+
+        if screenObject.settings.generatebackground then
+          screenObject.tiers[0] = {x1 = screenWidth/2 - (barWidth* 1.3), x2 = screenWidth/2 + (barWidth* 1.3), y1 = startingY -5, y2 = startingY + barHeight}
+        end
+      end
+
+      hydrogen = pures[string.lower("Pure Hydrogen")]
+      if hydrogen.containers ~= nil then
+        local pure = hydrogen
+        massPure, maxVol = getMass(pure)
+        percentPure = math.ceil(((math.ceil((massPure * 1000) - 0.5) / maxVol)*100))
+
+
+        centerPoint = screenWidth/2+barWidth+10
+        if single then
+          centerPoint = screenWidth/2+barWidthBig+10
+        end
+
+        mainhtml, backc = generateLine(startingY + lineGap, centerPoint, pure, percentPure, massPure, true, true, single, screenObject.settings.generatebackground, single)
+
+        html = html..mainhtml
+
+        bhtml = bhtml..backc
+
+        if screenObject.settings.generatebackground then
+          screenObject.tiers[0] = {x1 = screenWidth/2 - (barWidth* 1.3), x2 = screenWidth/2 + (barWidth* 1.3), y1 = startingY -5, y2 = startingY + barHeight}
+        end
+      end
+
+      if oxygen ~= nil or hydrogen ~= nill then
+        startingY = startingY + lineGap+20
+      end
+    end
+
+    tier = 0
+
+    centerPoint = -(screenWidth / 6)
+
+    if screenObject.settings.verticalView or single then
+      centerPoint = screenWidth/2
+    end
+
+    if single then
+      if screenObject.settings.verticalView then
+        startingY = screenHeight/2-(barHeightBig*4)
+      else
+        startingY = screenHeight/2-(barHeightBig*2)
+      end
+    end
+
+    originalStartingY = startingY
+
+
+    collumn = 1
+
+    lowestY = 0
+
+
+    for k, ore in pairs(sortedOres) do
+      if (ore.containers ~= nil or ore.into.containers ~= nil) and (screenObject.showTier == -1 or ore.tier == screenObject.showTier) then
+
+
+
+        startingY = startingY + lineGap
+
+        if lowestY < startingY then
+          lowestY = startingY
+        end
+
+
+        if tier ~= ore.tier then
+
+          if not screenObject.settings.verticalView then
+            centerPoint = centerPoint + (screenWidth / 6) * 2
+            if collumn == 4 then
+              collumn = 1
+              centerPoint = screenWidth / 3
+              originalStartingY = lowestY - lineGap + 20
+              startingY = lowestY + 20
+            else
+              startingY = originalStartingY + lineGap
+            end
+          else
+            startingY = startingY + 20
+          end
+
+          startingY = startingY + 50
+
+          if screenObject.settings.generatebackground then
+            if single then
+              centerPoint = screenWidth/2
+              bhtml = bhtml..[[<text text-anchor="middle" class="mainBigText" y="]]..(startingY-(barHeightBig*2)-10)..[[" x="]]..(centerPoint)..[[">Tier ]]..ore.tier..[[</text>]]
+            else
+              bhtml = bhtml..[[<text text-anchor="middle" class="mainText" y="]]..(startingY-barHeight-10)..[[" x="]]..(centerPoint)..[[">Tier ]]..ore.tier..[[</text>]]
+            end
+          end
+
+          if not screenObject.settings.verticalView then
+            startingY = startingY - 10
+          end
+
+
+          if screenObject.settings.generatebackground and not single then
+            screenObject.tiers[ore.tier] = {x1 = centerPoint - (barWidth* 1.3), x2 = centerPoint + (barWidth* 1.3), y1 = startingY - 5}
+            if ore.tier > 1 then
+              screenObject.tiers[ore.tier-1] = {x1 =  screenObject.tiers[ore.tier-1].x1 , x2 = screenObject.tiers[ore.tier-1].x2, y1 =  screenObject.tiers[ore.tier-1].y1, y2 = lowestY}
+            end
+          end
+
+          tier = ore.tier
+          collumn = collumn + 1
+        end
+
+
+        if ore.containers ~= nil then
+
+          if single then
+            centerPoint = screenWidth/2
+          end
+
+          massOre, maxVol = getMass(ore)
+          percentOre = math.ceil((math.ceil((massOre * 1000) - 0.5) / maxVol)*100)
+
+          local mainhtml, back = generateLine(startingY, centerPoint, ore, percentOre, massOre, false, false, textOnTop, screenObject.settings.generatebackground, single)
+
+          html = html..mainhtml
+
+          if screenObject.settings.generatebackground then
+            bhtml = bhtml..back
+          end
+        end
+
+        if ore.into.containers ~= nil then
+
+          local pure = ore.into
+          massPure, maxVol = getMass(pure)
+          percentPure = math.ceil(((math.ceil((massPure * 1000) - 0.5) / maxVol)*100))
+
+          center = centerPoint+barWidth+10
+          if single then
+            center = screenWidth/2 + barWidthBig+10
+          end
+          mainhtml, back = generateLine(startingY,center, pure, percentPure, massPure, false, true, textOnTop, screenObject.settings.generatebackground, single)
+          html = html..mainhtml
+
+          if screenObject.settings.generatebackground then
+            bhtml = bhtml..back
+          end
+
+        end
+        if not screenObject.settings.verticalView then
+          startingY = startingY + lineGap
+        end
+
+        if screenObject.settings.verticalView and single then
+          startingY = startingY + (lineGapBig*1.5)
+        end
+
+
+        line = line + 1
+      end
+    end
+
+
+    --    system.print("Hydro " .. screenObject.tiers[0].x1.." "..screenObject.tiers[0].x2.." "..screenObject.tiers[0].y1.." "..screenObject.tiers[0].y2)
+
+    if screenObject.settings.generatebackground and not single then
+      screenObject.tiers[tier] = {x1 =  screenObject.tiers[tier].x1 , x2 = screenObject.tiers[tier].x2, y1 =  screenObject.tiers[tier].y1, y2 = lowestY}
+      if screenObject.settings.verticalView then
+
+        for id,tiers in ipairs(screenObject.tiers) do
+
+          x1 = screenObject.tiers[id].x1-300
+          x2 = screenObject.tiers[id].x2-300
+          y1 = screenObject.tiers[id].y1+((screenWidth - screenHeight)/2)-(lineGap*2)
+          y2 = screenObject.tiers[id].y2+((screenWidth - screenHeight)/2)-lineGap
+
+          screenObject.tiers[id] = {x1 = y1, x2 = y2, y1 = x1, y2 = x2}
+        end
+
+        if screenObject.tiers[0] then
+          x1 = screenObject.tiers[0].x1-300
+          x2 = screenObject.tiers[0].x2-300
+          y1 = screenObject.tiers[0].y1+((screenWidth - screenHeight)/2)
+          y2 = screenObject.tiers[0].y2+((screenWidth - screenHeight)/2)
+
+          screenObject.tiers[0] = {x1 = y1, x2 = y2, y1 = x1, y2 = x2}
+        end
+      end
+    end
+
+    html = html..[[</g></svg></body>]]
+
+
+    if screenObject.settings.generatebackground then
+
+
+      bhtml = iconStyle..[[<svg width="100vw" height="100vh" viewBox="0 0 ]]..screenWidth..[[ ]]..screenHeight..[[" xmlns="http://www.w3.org/2000/svg">]]..bhtml..[[</g></svg>]]
+
+      if screenObject.backgroundContentId == nill then
+        screenObject.backgroundContentId = screenObject.screen.addContent(0, 0, bhtml)
+      else
+        screenObject.screen.resetContent(screenObject.backgroundContentId, bhtml)
+      end
+      screenObject.settings.generatebackground = false
+    end
+
+
+    if screenObject.oreContentId == nill then
+      screenObject.oreContentId = screenObject.screen.addContent(0, 0, html)
+
+
+
+      html = [[<svg width="100vw" height="100vh" viewBox="0 0 ]]..screenWidth..[[ ]]..screenHeight..[[" xmlns="http://www.w3.org/2000/svg">]]
+      html = html..[[<svg class = "svg-icon" x="0" y="0" width="]]..screenObject.button.size..[[px" height="]]..screenObject.button.size..[[px" viewBox="0 0 20 20">
+              <path d="M12.319,5.792L8.836,2.328C8.589,2.08,8.269,2.295,8.269,2.573v1.534C8.115,4.091,7.937,4.084,7.783,4.084c-2.592,0-4.7,2.097-4.7,4.676c0,1.749,0.968,3.337,2.528,4.146c0.352,0.194,0.651-0.257,0.424-0.529c-0.415-0.492-0.643-1.118-0.643-1.762c0-1.514,1.261-2.747,2.787-2.747c0.029,0,0.06,0,0.09,0.002v1.632c0,0.335,0.378,0.435,0.568,0.245l3.483-3.464C12.455,6.147,12.455,5.928,12.319,5.792 M8.938,8.67V7.554c0-0.411-0.528-0.377-0.781-0.377c-1.906,0-3.457,1.542-3.457,3.438c0,0.271,0.033,0.542,0.097,0.805C4.149,10.7,3.775,9.762,3.775,8.76c0-2.197,1.798-3.985,4.008-3.985c0.251,0,0.501,0.023,0.744,0.069c0.212,0.039,0.412-0.124,0.412-0.34v-1.1l2.646,2.633L8.938,8.67z M14.389,7.107c-0.34-0.18-0.662,0.244-0.424,0.529c0.416,0.493,0.644,1.118,0.644,1.762c0,1.515-1.272,2.747-2.798,2.747c-0.029,0-0.061,0-0.089-0.002v-1.631c0-0.354-0.382-0.419-0.558-0.246l-3.482,3.465c-0.136,0.136-0.136,0.355,0,0.49l3.482,3.465c0.189,0.186,0.568,0.096,0.568-0.245v-1.533c0.153,0.016,0.331,0.022,0.484,0.022c2.592,0,4.7-2.098,4.7-4.677C16.917,9.506,15.948,7.917,14.389,7.107 M12.217,15.238c-0.251,0-0.501-0.022-0.743-0.069c-0.212-0.039-0.411,0.125-0.411,0.341v1.101l-2.646-2.634l2.646-2.633v1.116c0,0.174,0.126,0.318,0.295,0.343c0.158,0.024,0.318,0.034,0.486,0.034c1.905,0,3.456-1.542,3.456-3.438c0-0.271-0.032-0.541-0.097-0.804c0.648,0.719,1.022,1.659,1.022,2.66C16.226,13.451,14.428,15.238,12.217,15.238"></path>
+            </svg>]]
+      html = html..[[</svg>]]
+      screenObject.screen.addContent(0, 0, html)
+
+
+    else
+      screenObject.screen.resetContent(screenObject.oreContentId, html)
+    end
+
+  end
+end
+for _,screenObject in ipairs(screens) do
+  screenObject.screen.clear()
+end
+generateHtml()
+unit.setTimer('updateTable', 1)
