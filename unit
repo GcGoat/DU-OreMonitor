@@ -135,7 +135,6 @@ if databank then
         if lastPart == "orent" then
           screenObject.settings.verticalView = value == 1
         elseif lastPart == "tier" then
-          system.print("recorded tier "..value)
           screenObject.showTier = value
         end
       end
@@ -619,9 +618,6 @@ function generateHtml()
         line = line + 1
       end
     end
-
-
-    --    system.print("Hydro " .. screenObject.tiers[0].x1.." "..screenObject.tiers[0].x2.." "..screenObject.tiers[0].y1.." "..screenObject.tiers[0].y2)
 
     if screenObject.settings.generatebackground and not single then
       screenObject.tiers[tier] = {x1 =  screenObject.tiers[tier].x1 , x2 = screenObject.tiers[tier].x2, y1 =  screenObject.tiers[tier].y1, y2 = lowestY}
