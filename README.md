@@ -6,7 +6,7 @@ Requirements:
 PB Setup:
 - Connect Databank and Core unit to ProgramableBoard. In what order you do that doesn't mater.
 - Connect to screen
-- Copy script code from HERE (**ctrl+a** and then **ctrl+c**) go back into game, right click PB -> Advanced -> Paste Lua Configuration from Clipboard
+- Copy script code from [**HERE**](https://raw.githubusercontent.com/GcGoat/DU-OreMonitor/main/json "HERE") (**ctrl+a** and then **ctrl+c**) go back into game, right click PB -> Advanced -> Paste Lua Configuration from Clipboard
 
 Container setup:
 - For containers to be properly recognized you will need to rename them. Ore containers can only contain one type of ore and its name should reflect its contents, for example bauxite container needs to have name as **Bauxite Ore** and gold one shopuld be as **Gold nuggets Ore**
