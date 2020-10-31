@@ -1,0 +1,3 @@
+-- one filter as mouseUp with variables as * *
+-- inside of it code should look like shown belove where slot3 needs to match actual slot name, leave everything else as it is
+evaluateButtons(x, y, false, slot3)
