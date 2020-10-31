@@ -441,7 +441,7 @@ function generateHtml()
     if single then
       startingY = screenHeight/2
     end
-
+    
     if screenObject.showTier == -1 or screenObject.showTier == 0 then
       oxygen = pures[string.lower("Pure Oxygen")]
 
@@ -560,7 +560,7 @@ function generateHtml()
 
           if screenObject.settings.generatebackground and not single then
             screenObject.tiers[ore.tier] = {x1 = centerPoint - (barWidth* 1.3), x2 = centerPoint + (barWidth* 1.3), y1 = startingY - 5}
-            if ore.tier > 1 then
+            if ore.tier > 1 and screenObject.tiers[ore.tier-1] ~= nill then
               screenObject.tiers[ore.tier-1] = {x1 =  screenObject.tiers[ore.tier-1].x1 , x2 = screenObject.tiers[ore.tier-1].x2, y1 =  screenObject.tiers[ore.tier-1].y1, y2 = lowestY}
             end
           end
@@ -620,7 +620,9 @@ function generateHtml()
     end
 
     if screenObject.settings.generatebackground and not single then
-      screenObject.tiers[tier] = {x1 =  screenObject.tiers[tier].x1 , x2 = screenObject.tiers[tier].x2, y1 =  screenObject.tiers[tier].y1, y2 = lowestY}
+      if screenObject.tiers[tier] ~= nill then
+        screenObject.tiers[tier] = {x1 =  screenObject.tiers[tier].x1 , x2 = screenObject.tiers[tier].x2, y1 =  screenObject.tiers[tier].y1, y2 = lowestY}
+      end
       if screenObject.settings.verticalView then
 
         for id,tiers in ipairs(screenObject.tiers) do
