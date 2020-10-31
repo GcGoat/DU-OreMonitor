@@ -66,4 +66,4 @@ Names of pure containers:
  - Pure Hydrogen
  
  
- Aditionally you might want to check lua variabels and modify couple main ones which are responsible for colculating container sizes. Right click PB -> Advanced -> Edit Lua parameters
+ Aditionally you might want to check lua variabels and modify couple main ones which are responsible for calculating container sizes. Right click PB -> Advanced -> Edit Lua parameters
