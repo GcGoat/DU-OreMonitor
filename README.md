@@ -1,6 +1,6 @@
 Some basic Ore Monitor script to show your currect stock in one or multiple screens by utilizing only one PB while having option to change what it shows on screens by simply clicking on them. Vertical or horizontal view can be picked and in case you need you can click on any tier to only show it. Databank will help out in keeping saved options next time you activate PB, so once set it will run without any need to reset it
 
-![](http://www.zrips.net/wp-content/uploads/2020/11/showtime.jpg
+![](http://www.zrips.net/wp-content/uploads/2020/11/showtime.jpg)
 
 Requirements:
 - Programable Board
