@@ -102,7 +102,26 @@ for key, value in pairs(unit) do
   if type(value) == "table" and type(value.export) == "table" then
     if value.getElementClass then
       if value.getElementClass() == "ScreenUnit" then
-        screens[#screens + 1] = {screen = value, slot = key, settings = {verticalView = true, generatebackground = true}, button = {x = 0, y = 0, size = 100}, tiers = {}, showTier = -1}
+        screens[#screens + 1] = {screen = value, slot = key, settings = {verticalView = true, renderSettings = false, generatebackground = true, tierSettings = {}},
+          settingsButton = {x = 0, y = 0, size = 70},
+          button = {x = 400, y = 0, size = 50},
+          barColorMode = {x = 100, y = 0, size = 50},
+          barBColorMode = {x = 150, y = 0, size = 50},
+          barTColorMode = {x = 200, y = 0, size = 50},
+          barMColorMode = {x = 250, y = 0, size = 50},
+          background = {x = 300, y = 0, size = 50},
+          applyToAll = {x = 350, y = 0, size = 50},
+
+          resetButton = {x = screenWidth-160, y = 0, size = 50, sizeY = 150},
+          tiers = {},
+          showTier = -1}
+
+        for i = -1, 5 do
+          screens[#screens].settings.tierSettings[i] = {}
+        end
+        screens[#screens].settings.tierSettings[-1] = {barTColorMode = 6}
+
+
       elseif value.getElementClass() == "CoreUnitStatic" then
         core = value
       elseif value.getElementClass() == "DataBankUnit" then
@@ -136,6 +155,22 @@ if databank then
           screenObject.settings.verticalView = value == 1
         elseif lastPart == "tier" then
           screenObject.showTier = value
+        end
+
+        if value > -2 then
+          for i = -1, 5 do
+            if lastPart == "barColorMode"..i then
+              screenObject.settings.tierSettings[i].barColorMode = value
+            elseif lastPart == "barBColorMode"..i then
+              screenObject.settings.tierSettings[i].barBColorMode = value
+            elseif lastPart == "barTColorMode"..i then
+              screenObject.settings.tierSettings[i].barTColorMode = value
+            elseif lastPart == "barMColorMode"..i then
+              screenObject.settings.tierSettings[i].barMColorMode = value
+            elseif lastPart == "background"..i then
+              screenObject.settings.tierSettings[i].background = value
+            end
+          end
         end
       end
     end
@@ -182,7 +217,7 @@ function OptimizedContainerMass(mass)
 end
 
 function getRGB(percentage)
-  return {(255 * percentage) / 100, (255 * (100 - percentage)) / 100, 0}
+  return {(255 * percentage) / 100, (255 * (100 - percentage)) / 100, (255 * (100 - percentage)) / 100}
 end
 
 function rgbToHex(rgb)
@@ -204,25 +239,121 @@ function rgbToHex(rgb)
   return hexadecimal
 end
 
-function getHex(percentage)
-  return rgbToHex(getRGB(percentage))
+function addBBC(color)
+  pbarBackgroundColors[#pbarBackgroundColors+1] = {color = color, border = "464646"}
+  pbarBackgroundColors[#pbarBackgroundColors+1] = {color = color, border = "fad47a"}
+  pbarBackgroundColors[#pbarBackgroundColors+1] = {color = color, border = "8c9698"}
+  pbarBackgroundColors[#pbarBackgroundColors+1] = {color = color, border = "ffffff"}
+end
+pbarBackgroundColors = {}
+addBBC("ffffff")
+addBBC("464646")
+addBBC("b6dfed")
+addBBC("05e4ff")
+addBBC("fad47a")
+addBBC("8c9698")
+addBBC("142027")
+
+function addTC(color)
+  pbarTextColors[#pbarTextColors+1] = {color = color, border = "484848"}
+  pbarTextColors[#pbarTextColors+1] = {color = color, border = "BFC0C1"}
+  pbarTextColors[#pbarTextColors+1] = {color = color}
+end
+pbarTextColors = {}
+addTC("ffffff")
+addTC("464646")
+addTC("b6dfed")
+addTC("05e4ff")
+addTC("fad47a")
+addTC("8c9698")
+addTC("142027")
+
+background = {}
+background[#background+1] = {color = "2C3735"}
+background[#background+1] = {color = "f3f3f3"}
+background[#background+1] = {color = "484848"}
+background[#background+1] = {color = "464646"}
+background[#background+1] = {color = "b6dfed"}
+background[#background+1] = {color = "05e4ff"}
+background[#background+1] = {color = "8c9698"}
+background[#background+1] = {color = "fad47a"}
+background[#background+1] = {color = "142027"}
+background[#background+1] = {color = "DE354C"}
+background[#background+1] = {color = "932432"}
+background[#background+1] = {color = "3C1874"}
+background[#background+1] = {color = "283747"}
+background[#background+1] = {color = "F3F3F3"}
+background[#background+1] = {color = "DCE1E3"}
+background[#background+1] = {color = "283747"}
+background[#background+1] = {color = "5C5F58"}
+background[#background+1] = {color = "266150"}
+background[#background+1] = {color = "4F4846"}
+background[#background+1] = {color = "12232E"}
+background[#background+1] = {color = "FFDF6C"}
+background[#background+1] = {color = "202020"}
+background[#background+1] = {color = "164A41"}
+background[#background+1] = {color = "4D774E"}
+background[#background+1] = {color = "9DC88D"}
+background[#background+1] = {color = "A3BCB6"}
+background[#background+1] = {color = "A28089"}
+background[#background+1] = {color = "8458B3"}
+background[#background+1] = {color = "ff1e00"}
+background[#background+1] = {color = "e8f9fd"}
+
+
+function getHex(percentage, mode)
+  if mode == 1 then
+    rgb = {(255 * percentage) / 100, (255 * (100 - percentage)) / 100, 0}
+  elseif mode == 2 then
+    rgb = {(255 * percentage) / 100, (255 * (100 - percentage)) / 100, (255 * (100 - percentage)) / 100}
+  elseif mode == 3 then
+    rgb = {(255 * percentage) / 100, (255 * (100 - percentage)) / 100, (255 * percentage) / 100}
+  elseif mode == 4 then
+    rgb = {0, (255 * (100 - percentage)) / 100, (255 * percentage) / 100}
+  elseif mode == 5 then
+    rgb = {(255 * percentage) / 100, 0, (255 * percentage) / 100}
+  elseif mode == 6 then
+    rgb = {(255 * percentage) / 100, 125,0}
+  elseif mode == 7 then
+    rgb = {125, 125, (255 * percentage) / 100}
+    --  elseif mode == 8 then
+    --    return "b6dfed"
+    --  elseif mode == 9 then
+    --    return "05e4ff"
+    --  elseif mode == 10 then
+    --    return "8c9698"
+    --  elseif mode == 11 then
+    --    return "fad47a"
+    --  elseif mode == 12 then
+    --    return "142027"
+
+  elseif #background> mode - 7 then
+    return background[mode - 7].color
+  else
+    rgb = {125, 125, 125}
+  end
+  return rgbToHex(rgb)
 end
 
-
-function barGraphColor(percentage, invert)
+function barGraphColor(percentage, invert, mode)
   if percentage == nil then percentage = 0 end
   if invert then
-    return  getHex( percentage)
+    return  getHex(percentage, mode)
   end
-  return  getHex(100 - percentage)
+  return  getHex(100 - percentage, mode)
 end
 
-iconStyle = [[
+
+
+function updateStyle(screenObject)
+
+  local iconStyle = [[
   <style>
-      text {
+    text {
       font-family: arial, candara, refrigerator, calibri;
-      stroke: #464646;
-      fill: #2D2D2D;
+      fill: white;
+      stroke: #3a3939;
+      stroke-width: 10;
     }  
 
     .pBar {
@@ -235,12 +366,37 @@ iconStyle = [[
       font-weight: bold;
       font-size: ]]..fontSize..[[;
       fill: #EBEEEE;
-    }      
+      stroke: #3a3939;
+      stroke-width: 2;
+    }    
+      
+    .colorMode {
+      font-weight: bold;
+      font-size: ]]..fontSize..[[;
+      fill: white;
+      stroke: #3a3939;
+      stroke-width: 10;
+      text-anchor: middle;
+    } 
     
     .mainBigText {
       font-weight: bold;
       font-size: ]]..fontBigSize..[[;
       fill: #EBEEEE;
+    }
+    .FSBM {
+      font-size: ]]..fontSizeBigMini..[[;
+    }
+    .FSBME {
+      font-size: ]]..fontSizeBigMini..[[;
+      text-anchor: end;
+    }
+    .FSM {
+      font-size: ]]..fontSizeMini..[[;
+    }
+    .FSME {
+      font-size: ]]..fontSizeMini..[[;
+      text-anchor: end;
     }
     .mainTextRight {
       text-anchor: end;
@@ -249,23 +405,91 @@ iconStyle = [[
       text-anchor: middle;
     } 
     
-    .svg-icon path,
-    .svg-icon polygon,
-    .svg-icon rect {
-      fill: #D4CABD;
+    .svg-icon path {
+      fill: none;
+      stroke: #3a3939;
+      stroke-width: 0.5;
     }
-
-    .svg-icon circle {
-      stroke: #D4CABD;
-      stroke-width: 2;
-    }
-  </style>
 ]]
 
-function generateLine(startingY, startingX, ore, percent, mass, invert, rightSide, textOnTop, generateBackground, single)
+  bgModes = {}
+  bgModes[1] = pbarBackgroundColors[1]
+  for i = -1, 5 do
+    local settings  = screenObject.settings.tierSettings[i]
+    if settings ~= nil and settings.barBColorMode ~= nill then
+      bgModes[settings.barBColorMode] = settings
+    end
+  end
+
+
+  for key, setting in pairs(bgModes) do
+    backGRoundColor = pbarBackgroundColors[key]
+
+    iconStyle = iconStyle..[[
+      .bgc]]..key..[[
+      {
+      fill:#]]..backGRoundColor.color..[[; 
+      stroke:#]]..backGRoundColor.border..[[;
+      }
+    ]]
+
+  end
+
+  btModes = {}
+  btModes[1] = pbarTextColors[1]
+  for i = -1, 5 do
+    local settings  = screenObject.settings.tierSettings[i]
+    if settings ~= nil and settings.barTColorMode ~= nill then
+      btModes[settings.barTColorMode] = settings
+    end
+  end
+  for key, setting in pairs(btModes) do
+    backTextColor = pbarTextColors[key]
+    iconStyle = iconStyle..[[
+      .bt]]..key..[[
+      {
+      fill:#]]..backTextColor.color..[[; ]]
+    if backTextColor.border ~= nil then
+      iconStyle = iconStyle..[[stroke:#]]..backTextColor.border..[[;]]
+    else
+      iconStyle = iconStyle..[[stroke-width: 0;]]
+    end
+    iconStyle = iconStyle..[[}
+    ]]
+  end
+
+  mtModes = {}
+  mtModes[1] = pbarTextColors[1]
+  for i = -1, 5 do
+    local settings  = screenObject.settings.tierSettings[i]
+    if settings ~= nil and settings.barMColorMode ~= nill then
+      mtModes[settings.barMColorMode] = settings
+    end
+  end
+  for key, setting in pairs(mtModes) do
+    backTextColor = pbarTextColors[key]
+    iconStyle = iconStyle..[[
+      .bmcolor]]..key..[[
+      {
+      fill:#]]..backTextColor.color..[[; ]]
+    if backTextColor.border ~= nil then
+      iconStyle = iconStyle..[[stroke:#]]..backTextColor.border..[[;]]
+    else
+      iconStyle = iconStyle..[[stroke-width: 0;]]
+    end
+    iconStyle = iconStyle..[[}
+    ]]
+  end
+
+
+  screenObject.iconStyle = iconStyle..[[</style>]]
+end
+
+function generateLine(startingY, startingX, ore, percent, mass, invert, rightSide, textOnTop, screenObject, single, oretier)
   local line = ""
   local background = ""
-
+  startingX = math.floor(startingX)
+  startingY = math.floor(startingY)
   if percent > 100 then
     percent = 100
   end
@@ -273,58 +497,142 @@ function generateLine(startingY, startingX, ore, percent, mass, invert, rightSid
     percent = 0
   end
 
+  if screenObject.settings.generatebackground then
+    colorMMode = screenObject.settings.tierSettings[oretier].barMColorMode
+    if colorMMode == nil then
+      colorMMode = screenObject.settings.tierSettings[-1].barMColorMode
+    end
+    if colorMMode == nil then
+      colorMMode = 1
+    end
+  end
+
   if single then
 
     if textOnTop then
-      if generateBackground then
-        background = [[<text class="mainBigText mainTextMiddle" y="]]..(startingY-7)..[[" x="]]..(startingX - barWidthBig/2)..[[">]]..ore.name..[[</text>]]
+      if screenObject.settings.generatebackground then
+        background = [[<text class="mainBigText mainTextMiddle bmcolor]]..colorMMode..[[" y="]]..(startingY-7)..[[" x="]]..math.floor(startingX - barWidthBig/2)..[[">]]..ore.name..[[</text>]]
       end
       startingY = startingY + barHeightBig-1
     else
-      if generateBackground then
+      if screenObject.settings.generatebackground then
         if rightSide then
-          background = [[<text class="mainBigText" y="]]..(startingY)..[[" x="]]..(startingX)..[[">]]..ore.name..[[</text>]]
+          background = [[<text class="mainBigText bmcolor]]..colorMMode..[[" y="]]..(startingY)..[[" x="]]..(startingX)..[[">]]..ore.name..[[</text>]]
         else
-          background = [[<text class="mainBigText mainTextRight" y="]]..(startingY)..[[" x="]]..(startingX - barWidthBig - 10)..[[">]]..ore.name..[[</text>]]
+          background = [[<text class="mainBigText mainTextRight bmcolor]]..colorMMode..[[" y="]]..(startingY)..[[" x="]]..(startingX - barWidthBig - 10)..[[">]]..ore.name..[[</text>]]
         end
       end
     end
 
   else
     if textOnTop then
-      if generateBackground then
-        background = [[<text class="mainText mainTextMiddle" y="]]..(startingY-7)..[[" x="]]..(startingX - barWidth/2)..[[">]]..ore.name..[[</text>]]
+      if screenObject.settings.generatebackground then
+        background = [[<text class="mainText mainTextMiddle bmcolor]]..colorMMode..[[" y="]]..(startingY-7)..[[" x="]]..math.floor(startingX - barWidth/2)..[[">]]..ore.name..[[</text>]]
       end
       startingY = startingY + barHeight-1
     else
-      if generateBackground then
+      if screenObject.settings.generatebackground then
         if rightSide then
-          background = [[<text class="mainText" y="]]..(startingY)..[[" x="]]..(startingX)..[[">]]..ore.name..[[</text>]]
+          background = [[<text class="mainText bmcolor]]..colorMMode..[[" y="]]..(startingY)..[[" x="]]..(startingX)..[[">]]..ore.name..[[</text>]]
         else
-          background = [[<text class="mainText mainTextRight" y="]]..(startingY)..[[" x="]]..(startingX - barWidth - 10)..[[">]]..ore.name..[[</text>]]
+          background = [[<text class="mainText mainTextRight bmcolor]]..colorMMode..[[" y="]]..(startingY)..[[" x="]]..(startingX - barWidth - 10)..[[">]]..ore.name..[[</text>]]
         end
       end
     end
   end
 
-  if generateBackground then
+  if screenObject.settings.generatebackground then
+
+    colorBMode = screenObject.settings.tierSettings[oretier].barBColorMode
+    if colorBMode == nil or colorBMode == -2 then
+      colorBMode = screenObject.settings.tierSettings[-1].barBColorMode
+    end
+    if colorBMode == nil or colorBMode == -2 then
+      colorBMode = 1
+    end
     if single then
-      background = background..[[<rect class ="pBar" x="]]..(startingX - barWidthBig -5)..[[" y="]]..(5+(startingY)-barHeightBig)..[[" height="]]..barHeightBig..[[" width="]]..barWidthBig..[["/>]]
+      background = background..[[<rect class ="pBar bgc]]..colorBMode..[[" x="]]..math.floor(startingX - barWidthBig -5)..[[" y="]]..math.floor(5+(startingY)-barHeightBig)..[[" height="]]..barHeightBig..[[" width="]]..barWidthBig..[["/>]]
     else
-      background = background..[[<rect class ="pBar" x="]]..(startingX - barWidth -5)..[[" y="]]..(5+(startingY)-barHeight)..[[" height="]]..barHeight..[[" width="]]..barWidth..[["/>]]
+      background = background..[[<rect class ="pBar bgc]]..colorBMode..[[" x="]]..math.floor(startingX - barWidth -5)..[[" y="]]..math.floor(5+(startingY)-barHeight)..[[" height="]]..barHeight..[[" width="]]..barWidth..[["/>]]
     end
   end
 
+  local colorMode = screenObject.settings.tierSettings[oretier].barColorMode
+  if colorMode == nil then
+    colorMode = screenObject.settings.tierSettings[-1].barColorMode
+  end
+  if colorMode == nil then
+    colorMode = 1
+  end
+
+  colorTMode = screenObject.settings.tierSettings[oretier].barTColorMode
+  if colorTMode == nil then
+    colorTMode = screenObject.settings.tierSettings[-1].barTColorMode
+  end
+  if colorTMode == nil then
+    colorTMode = 1
+  end
+
   if single then
-    line = line..[[<rect class ="pBar" x="]]..(startingX - barWidthBig -5)..[[" y="]]..(5+(startingY)-barHeightBig)..[[" height="]]..barHeightBig..[[" width="]]..(percent * barWidthBig / 100)..[[" style="fill:#]]..barGraphColor(percent, invert)..[[;"/>]]
-    line = line..[[<text x="]]..(startingX-barWidthBig)..[[" y="]]..(startingY-2)..[[" font-size="]]..fontSizeBigMini..[[">]]..percent..[[%</text>]]
-    line = line..[[<text class = "thickOutlined" text-anchor="end" x="]]..(startingX - 6)..[[" y="]]..(startingY-2)..[[" font-size="]]..fontSizeBigMini..[[">]]..mass..[[KL</text>]]
+    --    if percent > 0 then
+    line = line..[[<rect class ="pBar bgc]]..colorBMode..[[" x="]]..math.floor(startingX - barWidthBig -5)..[[" y="]]..math.floor(5+(startingY)-barHeightBig)..[[" height="]]..barHeightBig..[[" width="]]..math.floor(percent * barWidthBig / 100)..[[" style="fill:#]]..barGraphColor(percent, invert, colorMode)..[[;"/>]]
+    --    end
+    line = line..[[<text class ="FSBM bt]]..colorTMode..[[" x="]]..math.floor(startingX-barWidthBig)..[[" y="]]..math.floor(startingY-2)..[[">]]..percent..[[%</text>]]
+    line = line..[[<text class ="FSBME bt]]..colorTMode..[[" x="]]..math.floor(startingX - 6)..[[" y="]]..math.floor(startingY-2)..[[">]]..mass..[[KL</text>]]
   else
-    line = line..[[<rect class ="pBar" x="]]..(startingX - barWidth -5)..[[" y="]]..(5+(startingY)-barHeight)..[[" height="]]..barHeight..[[" width="]]..(percent * barWidth / 100)..[[" style="fill:#]]..barGraphColor(percent, invert)..[[;"/>]]
-    line = line..[[<text x="]]..(startingX-barWidth)..[[" y="]]..(startingY-2)..[[" font-size="]]..fontSizeMini..[[">]]..percent..[[%</text>]]
-    line = line..[[<text class = "thickOutlined" text-anchor="end" x="]]..(startingX - 6)..[[" y="]]..(startingY-2)..[[" font-size="]]..fontSizeMini..[[">]]..mass..[[KL</text>]]
+    --    if percent > 0 then
+    line = line..[[<rect class ="pBar bgc]]..colorBMode..[[" x="]]..math.floor(startingX - barWidth -5)..[[" y="]]..math.floor(5+(startingY)-barHeight)..[[" height="]]..barHeight..[[" width="]]..math.floor(percent * barWidth / 100)..[[" style="fill:#]]..barGraphColor(percent, invert, colorMode)..[[;"/>]]
+    --    end
+    line = line..[[<text class ="FSM bt]]..colorTMode..[[" x="]]..math.floor(startingX-barWidth)..[[" y="]]..math.floor(startingY-2)..[[">]]..percent..[[%</text>]]
+    line = line..[[<text class ="FSME bt]]..colorTMode..[[" x="]]..math.floor(startingX - 6)..[[" y="]]..math.floor(startingY-2)..[[">]]..mass..[[KL</text>]]
   end
   return line, background
+end
+
+function save(screenObject)
+  if databank then
+    for tier = -1, 5 do
+      tierSetting = screenObject.settings.tierSettings[tier]
+      if (tierSetting.barTColorMode ~= nill)  then
+        databank.setIntValue(screenObject.slot.."_barTColorMode"..tier, tierSetting.barTColorMode)
+      end
+
+      if (tierSetting.barBColorMode ~= nill)  then
+        databank.setIntValue(screenObject.slot.."_barBColorMode"..tier, tierSetting.barBColorMode)
+      end
+
+      if (tierSetting.barColorMode ~= nill)  then
+        databank.setIntValue(screenObject.slot.."_barColorMode"..tier, tierSetting.barColorMode)
+      end
+
+      if (tierSetting.barMColorMode ~= nill)  then
+        databank.setIntValue(screenObject.slot.."_barMColorMode"..tier, tierSetting.barMColorMode)
+      end
+
+      if (tierSetting.background ~= nill)  then
+        databank.setIntValue(screenObject.slot.."_background"..tier, tierSetting.background)
+      end
+    end
+
+
+    if screenObject.settings.verticalView then
+      databank.setIntValue(screenObject.slot.."_orent", 1)
+    else
+      databank.setIntValue(screenObject.slot.."_orent", 0)
+    end
+    if databank then
+      databank.setIntValue(screenObject.slot.."_tier", screenObject.showTier)
+    end
+  end
+end
+
+function saveAll()
+  if databank then
+    databank.clear()
+    for _,screenObject in ipairs(screens) do
+      save(screenObject)
+    end
+  end
 end
 
 function evaluateButtons(x, y, pressDown, unit)
@@ -332,7 +640,7 @@ function evaluateButtons(x, y, pressDown, unit)
   y = screenHeight * y
   for _,screenObject in ipairs(screens) do
     if  screenObject.screen.getId() == unit.getId() then
-      if screenObject.button.x <= x and screenObject.button.x+ screenObject.button.size+100 >= x and screenObject.button.y <= y and screenObject.button.y+ screenObject.button.size+100 >= y and not pressDown then
+      if screenObject.button.x <= x and screenObject.button.x+ screenObject.button.size >= x and screenObject.button.y <= y and screenObject.button.y+ screenObject.button.size >= y and not pressDown then
         screenObject.settings.verticalView = not screenObject.settings.verticalView
         if databank then
           if screenObject.settings.verticalView then
@@ -345,6 +653,211 @@ function evaluateButtons(x, y, pressDown, unit)
         generateHtml()
         break
       end
+
+
+      if screenObject.settingsButton.x <= x and screenObject.settingsButton.x+ screenObject.settingsButton.size >= x and
+        screenObject.settingsButton.y <= y and screenObject.settingsButton.y+ screenObject.settingsButton.size >= y and not pressDown then
+        screenObject.settings.renderSettings = not screenObject.settings.renderSettings
+        screenObject.settings.generatebackground = true
+        generateHtml()
+        break
+      end
+
+      if  screenObject.settings.renderSettings then
+        if screenObject.barColorMode.x <= x and screenObject.barColorMode.x+ screenObject.barColorMode.size >= x and
+          screenObject.barColorMode.y <= y and screenObject.barColorMode.y+ screenObject.barColorMode.size >= y and not pressDown then
+          local colorMode = screenObject.settings.tierSettings[screenObject.showTier].barColorMode
+
+          if colorMode == nil then
+            colorMode = 2
+          else
+            colorMode = colorMode + 1
+          end
+
+          if colorMode > 7 + #background then
+            colorMode = 1
+          end
+
+          screenObject.settings.tierSettings[screenObject.showTier].barColorMode = colorMode
+
+          if databank then
+            databank.setIntValue(screenObject.slot.."_barColorMode"..screenObject.showTier, colorMode)
+            screenObject.settings.generatebackground = true
+          end
+          generateHtml()
+          break
+        end
+
+        if screenObject.barBColorMode.x <= x and screenObject.barBColorMode.x+ screenObject.barBColorMode.size >= x and
+          screenObject.barBColorMode.y <= y and screenObject.barBColorMode.y+ screenObject.barBColorMode.size >= y and not pressDown then
+          local colorMode = screenObject.settings.tierSettings[screenObject.showTier].barBColorMode
+
+          if colorMode == nil then
+            colorMode = 2
+          else
+            colorMode = colorMode + 1
+          end
+
+          if colorMode > #pbarBackgroundColors then
+            colorMode = 1
+          end
+
+          screenObject.settings.tierSettings[screenObject.showTier].barBColorMode = colorMode
+
+          if databank then
+            databank.setIntValue(screenObject.slot.."_barBColorMode"..screenObject.showTier, colorMode)
+            screenObject.settings.generatebackground = true
+          end
+          generateHtml()
+          break
+        end
+
+        if screenObject.barTColorMode.x <= x and screenObject.barTColorMode.x+ screenObject.barTColorMode.size >= x and
+          screenObject.barTColorMode.y <= y and screenObject.barTColorMode.y+ screenObject.barTColorMode.size >= y and not pressDown then
+          local colorMode = screenObject.settings.tierSettings[screenObject.showTier].barTColorMode
+
+          if colorMode == nil then
+            colorMode = 7
+          else
+            colorMode = colorMode + 1
+          end
+
+          if colorMode > #pbarTextColors then
+            colorMode = 1
+          end
+
+          screenObject.settings.tierSettings[screenObject.showTier].barTColorMode = colorMode
+
+          if databank then
+            databank.setIntValue(screenObject.slot.."_barTColorMode"..screenObject.showTier, colorMode)
+            screenObject.settings.generatebackground = true
+          end
+          generateHtml()
+          break
+        end
+
+        if screenObject.barMColorMode.x <= x and screenObject.barMColorMode.x+ screenObject.barMColorMode.size >= x and
+          screenObject.barMColorMode.y <= y and screenObject.barMColorMode.y+ screenObject.barMColorMode.size >= y and not pressDown then
+          local colorMode = screenObject.settings.tierSettings[screenObject.showTier].barMColorMode
+
+          if colorMode == nil then
+            colorMode = 2
+          else
+            colorMode = colorMode + 1
+          end
+
+          if colorMode > #pbarTextColors then
+            colorMode = 1
+          end
+
+          screenObject.settings.tierSettings[screenObject.showTier].barMColorMode = colorMode
+
+          if databank then
+            databank.setIntValue(screenObject.slot.."_barMColorMode"..screenObject.showTier, colorMode)
+            screenObject.settings.generatebackground = true
+          end
+          generateHtml()
+          break
+        end
+
+        if screenObject.background.x <= x and screenObject.background.x+ screenObject.background.size >= x and
+          screenObject.background.y <= y and screenObject.background.y+ screenObject.background.size >= y and not pressDown then
+          local colorMode = screenObject.settings.tierSettings[screenObject.showTier].background
+
+          if colorMode == nil then
+            colorMode = 2
+          else
+            colorMode = colorMode + 1
+          end
+
+          if colorMode > #background then
+            colorMode = 1
+          end
+
+          screenObject.settings.tierSettings[screenObject.showTier].background = colorMode
+
+          if databank then
+            databank.setIntValue(screenObject.slot.."_background"..screenObject.showTier, colorMode)
+            screenObject.settings.generatebackground = true
+          end
+          generateHtml()
+          break
+        end
+
+        -- Apply To All Screens
+        if screenObject.applyToAll.x <= x and screenObject.applyToAll.x+ screenObject.applyToAll.size >= x and
+          screenObject.applyToAll.y <= y and screenObject.applyToAll.y+ screenObject.applyToAll.size >= y and not pressDown then
+
+          for id_,screenObject_ in ipairs(screens) do
+            if screenObject.screen.getId() ~= screenObject_.screen.getId() then
+
+              screenObject_.settings.tierSettings = {}
+              for i = -1, 5 do
+                screenObject_.settings.tierSettings[i] = {}
+              end
+              screenObject_.settings.tierSettings[-1] = {barTColorMode = 6}
+
+              for tier = -1, 5 do
+                tierSetting = screenObject.settings.tierSettings[tier]
+                if (tierSetting.barTColorMode ~= nill and tierSetting.barTColorMode ~= -2)  then
+                  screenObject_.settings.tierSettings[tier].barTColorMode = tierSetting.barTColorMode
+                end
+
+                if (tierSetting.barBColorMode ~= nill and tierSetting.barBColorMode ~= -2)  then
+                  screenObject_.settings.tierSettings[tier].barBColorMode = tierSetting.barBColorMode
+                end
+
+                if (tierSetting.barColorMode ~= nill and tierSetting.barColorMode ~= -2)  then
+                  screenObject_.settings.tierSettings[tier].barColorMode = tierSetting.barColorMode
+                end
+
+                if (tierSetting.barMColorMode ~= nill and tierSetting.barMColorMode ~= -2)  then
+                  screenObject_.settings.tierSettings[tier].barMColorMode = tierSetting.barMColorMode
+                end
+
+                if (tierSetting.background ~= nill and tierSetting.background ~= -2)  then
+                  screenObject_.settings.tierSettings[tier].background = tierSetting.background
+                end
+              end
+
+
+              screenObject_.settings.generatebackground = true
+            end
+          end
+
+          saveAll()
+          generateHtml()
+          break
+        end
+
+        width = screenObject.resetButton.size
+        if screenObject.resetButton.sizeY ~= nill then
+          width = screenObject.resetButton.sizeY
+        end
+        if screenObject.resetButton.x <= x and screenObject.resetButton.x+ screenObject.resetButton.size >= x and
+          screenObject.resetButton.y <= y and screenObject.resetButton.y+ screenObject.resetButton.width >= y and not pressDown then
+
+          for i = -1, 5 do
+            screenObject.settings.tierSettings[i] = {}
+          end
+          screenObject.settings.tierSettings[-1] = {barTColorMode = 6}
+
+          if databank then
+
+            databank.setIntValue(screenObject.slot.."_barTColorMode"..screenObject.showTier, -2)
+            databank.setIntValue(screenObject.slot.."_barBColorMode"..screenObject.showTier, -2)
+            databank.setIntValue(screenObject.slot.."_barColorMode"..screenObject.showTier, -2)
+            databank.setIntValue(screenObject.slot.."_barMColorMode"..screenObject.showTier, -2)
+            databank.setIntValue(screenObject.slot.."_background"..screenObject.showTier, -2)
+
+          end
+
+          screenObject.settings.generatebackground = true
+          generateHtml()
+          break
+        end
+      end
+
 
       oldTier = screenObject.showTier
 
@@ -392,15 +905,33 @@ function getMass(element)
   return mass, maxVol
 end
 
+function optionColorButton(colormode, fill, border, button, y)
+  local bhtml = ""
+  if fill ~= nil then
+
+    width = button.size
+    if button.sizeY ~= nill then
+      width = button.sizeY
+    end
+
+    bhtml = [[<rect fill="#]]..fill..[[" height="]]..(button.size)..[[" width="]]..(width)..[[" y="]]..(y)..[[" x="]]..(button.x)..[["/>]]
+  end
+  if border ~= nil then
+    bhtml = bhtml..[[<rect fill="#]]..border..[[" height="]]..(button.size)..[[" width="]]..math.floor((width)/2)..[[" y="]]..(y)..[[" x="]]..math.floor(button.x+(button.size*0.5))..[["/>]]
+  end
+  bhtml = bhtml..[[<text class = "colorMode" x="]]..math.floor(button.x+(width*0.5))..[[" y="]]..math.floor(y+(button.size*0.85))..[[">]]..colormode..[[</text>]]
+  return bhtml
+end
+
+
 function generateHtml()
 
   for id,screenObject in ipairs(screens) do
 
-
     startingY = 0
 
     if screenObject.settings.verticalView then
-      startingY = -((screenWidth - screenHeight) /2)
+      startingY = -math.floor((screenWidth - screenHeight) /2)
     end
 
     bhtml = ""
@@ -411,6 +942,7 @@ function generateHtml()
 
     html = html..[[<svg width="100vw" height="100vh" viewBox="0 0 ]]..screenWidth..[[ ]]..screenHeight..[[" xmlns="http://www.w3.org/2000/svg">]]
 
+
     if screenObject.settings.verticalView then
       html = html..[[<g transform="rotate(-90 ]]..(screenWidth/2)..[[ ]]..(screenHeight/2)..[[)">]]
       if screenObject.settings.generatebackground then
@@ -418,17 +950,33 @@ function generateHtml()
       end
     end
 
-    if screenObject.settings.verticalView then
+    if screenObject.settings.generatebackground then
+      backgroundColor = screenObject.settings.tierSettings[screenObject.showTier].background
 
+      if backgroundColor == nill then
+        backgroundColor = screenObject.settings.tierSettings[-1].background
+      end
+      if backgroundColor ~= nill and backgroundColor ~= -2 then
+        backgroundColor = background[backgroundColor]
+      end
+
+      if backgroundColor == nill then
+        backgroundColor = background[1]
+      end
+    end
+
+    if screenObject.settings.verticalView then
       if screenObject.settings.generatebackground then
-        bhtml = bhtml..[[<rect fill="#2C3735" id="canvas_background" height="]]..screenWidth..[[" width="]]..screenHeight..[[" y="]]..startingY..[[" x="]]..((screenWidth - screenHeight) /2)..[["/>]]
+        bhtml = bhtml..[[<rect fill="#]]..backgroundColor.color..[[" height="]]..screenWidth..[[" width="]]..screenHeight..[[" y="]]..startingY..[[" x="]]..((screenWidth - screenHeight) /2)..[["/>]]
       end
       startingY =  startingY + 70
     else
       if screenObject.settings.generatebackground then
-        bhtml = bhtml..[[<rect fill="#2C3735" id="canvas_background" height="]]..screenHeight..[[" width="]]..screenWidth..[[" y="0" x="0"/>]]
+        bhtml = bhtml..[[<rect fill="#]]..backgroundColor.color..[[" height="]]..screenHeight..[[" width="]]..screenWidth..[[" y="0" x="0"/>]]
       end
     end
+
+
 
 
     single = screenObject.showTier ~= -1
@@ -439,9 +987,9 @@ function generateHtml()
 
 
     if single then
-      startingY = screenHeight/2
+      startingY = math.floor(screenHeight/2)
     end
-    
+
     if screenObject.showTier == -1 or screenObject.showTier == 0 then
       oxygen = pures[string.lower("Pure Oxygen")]
 
@@ -450,9 +998,14 @@ function generateHtml()
         massPure, maxVol = getMass(pure)
         percentPure = math.ceil(((math.ceil((massPure * 1000) - 0.5) / maxVol)*100))
 
+        oxyY = startingY + lineGap
+        if single then
+          if not screenObject.settings.verticalView then
+            oxyY = startingY - lineGap
+          end
+        end
 
-
-        mainhtml, backc = generateLine(startingY + lineGap, screenWidth/2, pure, percentPure, massPure, true, false, single, screenObject.settings.generatebackground, single)
+        mainhtml, backc = generateLine(oxyY, screenWidth/2, pure, percentPure, massPure, true, false, single, screenObject, single, 0)
         html = html..mainhtml
 
         bhtml = bhtml..backc
@@ -474,7 +1027,14 @@ function generateHtml()
           centerPoint = screenWidth/2+barWidthBig+10
         end
 
-        mainhtml, backc = generateLine(startingY + lineGap, centerPoint, pure, percentPure, massPure, true, true, single, screenObject.settings.generatebackground, single)
+        oxyY = startingY + lineGap
+        if single then
+          if not screenObject.settings.verticalView then
+            oxyY = startingY - lineGap
+          end
+        end
+
+        mainhtml, backc = generateLine(oxyY, centerPoint, pure, percentPure, massPure, true, true, single, screenObject, single, 0)
 
         html = html..mainhtml
 
@@ -545,11 +1105,21 @@ function generateHtml()
           startingY = startingY + 50
 
           if screenObject.settings.generatebackground then
+
+            colorMMode = screenObject.settings.tierSettings[ore.tier].barMColorMode
+            if colorMMode == nil then
+              colorMMode = screenObject.settings.tierSettings[-1].barMColorMode
+            end
+            if colorMMode == nil then
+              colorMMode = 1
+            end
+
+
             if single then
               centerPoint = screenWidth/2
-              bhtml = bhtml..[[<text text-anchor="middle" class="mainBigText" y="]]..(startingY-(barHeightBig*2)-10)..[[" x="]]..(centerPoint)..[[">Tier ]]..ore.tier..[[</text>]]
+              bhtml = bhtml..[[<text text-anchor="middle" class="mainBigText bmcolor]]..colorMMode..[[" y="]]..(startingY-(barHeightBig*2)-10)..[[" x="]]..(centerPoint)..[[">Tier ]]..ore.tier..[[</text>]]
             else
-              bhtml = bhtml..[[<text text-anchor="middle" class="mainText" y="]]..(startingY-barHeight-10)..[[" x="]]..(centerPoint)..[[">Tier ]]..ore.tier..[[</text>]]
+              bhtml = bhtml..[[<text text-anchor="middle" class="mainText bmcolor]]..colorMMode..[[" y="]]..(startingY-barHeight-10)..[[" x="]]..(centerPoint)..[[">Tier ]]..ore.tier..[[</text>]]
             end
           end
 
@@ -579,7 +1149,7 @@ function generateHtml()
           massOre, maxVol = getMass(ore)
           percentOre = math.ceil((math.ceil((massOre * 1000) - 0.5) / maxVol)*100)
 
-          local mainhtml, back = generateLine(startingY, centerPoint, ore, percentOre, massOre, false, false, textOnTop, screenObject.settings.generatebackground, single)
+          local mainhtml, back = generateLine(startingY, centerPoint, ore, percentOre, massOre, false, false, textOnTop, screenObject, single, tier)
 
           html = html..mainhtml
 
@@ -598,7 +1168,7 @@ function generateHtml()
           if single then
             center = screenWidth/2 + barWidthBig+10
           end
-          mainhtml, back = generateLine(startingY,center, pure, percentPure, massPure, false, true, textOnTop, screenObject.settings.generatebackground, single)
+          mainhtml, back = generateLine(startingY,center, pure, percentPure, massPure, false, true, textOnTop, screenObject, single, tier)
           html = html..mainhtml
 
           if screenObject.settings.generatebackground then
@@ -651,8 +1221,83 @@ function generateHtml()
 
     if screenObject.settings.generatebackground then
 
+      updateStyle(screenObject)
 
-      bhtml = iconStyle..[[<svg width="100vw" height="100vh" viewBox="0 0 ]]..screenWidth..[[ ]]..screenHeight..[[" xmlns="http://www.w3.org/2000/svg">]]..bhtml..[[</g></svg>]]
+      bhtml = screenObject.iconStyle..[[<svg width="100vw" height="100vh" viewBox="0 0 ]]..screenWidth..[[ ]]..screenHeight..[[" xmlns="http://www.w3.org/2000/svg">]]..bhtml..[[</g></svg>]]
+
+      bhtml = bhtml..[[<svg width="100vw" height="100vh" viewBox="0 0 ]]..screenWidth..[[ ]]..screenHeight..[[" xmlns="http://www.w3.org/2000/svg">]]
+      local y = (screenObject.barColorMode.y+(screenObject.barColorMode.size*0.25))
+
+
+      if  screenObject.settings.renderSettings then
+
+        bhtml = bhtml..[[<rect fill="#585857" fill-opacity="0.7" height="]]..(screenObject.settingsButton.size)..[[" width="]]..(screenObject.settingsButton.size*7-20)..[[" y="0" x="0"/>]]
+
+        local colormode = screenObject.settings.tierSettings[screenObject.showTier].barColorMode
+        if colormode== nill then
+          colormode = 1
+        end
+
+        bhtml = bhtml..optionColorButton(colormode, barGraphColor(0, false, colormode), barGraphColor(100, false, colormode), screenObject.barColorMode, y)
+
+        local bcolormode = screenObject.settings.tierSettings[screenObject.showTier].barBColorMode
+        if bcolormode ~= nill then
+          colormode = bcolormode
+          bcolormode = pbarBackgroundColors[bcolormode]
+        end
+        if bcolormode == nill then
+          colormode = 1
+          bcolormode = pbarBackgroundColors[1]
+        end
+
+        bhtml = bhtml..optionColorButton(colormode, bcolormode.color, bcolormode.border, screenObject.barBColorMode, y)
+
+        local bcolormode = screenObject.settings.tierSettings[screenObject.showTier].barTColorMode
+        if bcolormode ~= nill then
+          colormode = bcolormode
+          bcolormode = pbarTextColors[bcolormode]
+        end
+        if bcolormode == nill then
+          colormode = 1
+          bcolormode = pbarTextColors[1]
+        end
+
+        bhtml = bhtml..optionColorButton(colormode, bcolormode.color, bcolormode.border, screenObject.barTColorMode, y)
+
+        local mcolormode = screenObject.settings.tierSettings[screenObject.showTier].barMColorMode
+        if mcolormode ~= nill then
+          colormode = mcolormode
+          mcolormode = pbarTextColors[mcolormode]
+        end
+        if mcolormode == nill then
+          colormode = 1
+          mcolormode = pbarTextColors[1]
+        end
+
+        bhtml = bhtml..optionColorButton(colormode, mcolormode.color, mcolormode.border, screenObject.barMColorMode, y)
+
+        local bmode = screenObject.settings.tierSettings[screenObject.showTier].background
+        if bmode ~= nill then
+          colormode = bmode
+          bmode = background[bmode]
+        end
+        if bmode == nill then
+          colormode = 1
+          bmode = background[1]
+        end
+
+        bhtml = bhtml..optionColorButton(colormode, bmode.color, bmode.color, screenObject.background, y)
+        bhtml = bhtml..optionColorButton("Reset", "ff0000", "ff0000", screenObject.resetButton, y)
+        bhtml = bhtml..optionColorButton("+", "9A947C", nill, screenObject.applyToAll, y)
+        bhtml = bhtml..[[<rect fill="#9A947C" height="]]..(screenObject.button.size)..[[" width="]]..(screenObject.button.size)..[[" y="]]..(y)..[[" x="]]..(screenObject.button.x)..[["/>]]
+        bhtml = bhtml..optionColorButton("R", "9A947C", nill, screenObject.button, y)
+
+      else
+        bhtml = bhtml..[[<rect fill="#585857" fill-opacity="0.5" height="]]..(screenObject.settingsButton.size)..[[" width="]]..(screenObject.settingsButton.size+20)..[[" y="0" x="0"/>]]
+      end
+
+      bhtml = bhtml..[[<text class ="FSBM" fill-opacity="0.7" x="]]..math.floor(screenObject.settingsButton.x+(screenObject.settingsButton.size/2))..[[" y="]]..math.floor(screenObject.settingsButton.y+screenObject.settingsButton.size-10)..[[">></text>]]
+
 
       if screenObject.backgroundContentId == nill then
         screenObject.backgroundContentId = screenObject.screen.addContent(0, 0, bhtml)
@@ -668,12 +1313,8 @@ function generateHtml()
 
 
 
-      html = [[<svg width="100vw" height="100vh" viewBox="0 0 ]]..screenWidth..[[ ]]..screenHeight..[[" xmlns="http://www.w3.org/2000/svg">]]
-      html = html..[[<svg class = "svg-icon" x="0" y="0" width="]]..screenObject.button.size..[[px" height="]]..screenObject.button.size..[[px" viewBox="0 0 20 20">
-              <path d="M12.319,5.792L8.836,2.328C8.589,2.08,8.269,2.295,8.269,2.573v1.534C8.115,4.091,7.937,4.084,7.783,4.084c-2.592,0-4.7,2.097-4.7,4.676c0,1.749,0.968,3.337,2.528,4.146c0.352,0.194,0.651-0.257,0.424-0.529c-0.415-0.492-0.643-1.118-0.643-1.762c0-1.514,1.261-2.747,2.787-2.747c0.029,0,0.06,0,0.09,0.002v1.632c0,0.335,0.378,0.435,0.568,0.245l3.483-3.464C12.455,6.147,12.455,5.928,12.319,5.792 M8.938,8.67V7.554c0-0.411-0.528-0.377-0.781-0.377c-1.906,0-3.457,1.542-3.457,3.438c0,0.271,0.033,0.542,0.097,0.805C4.149,10.7,3.775,9.762,3.775,8.76c0-2.197,1.798-3.985,4.008-3.985c0.251,0,0.501,0.023,0.744,0.069c0.212,0.039,0.412-0.124,0.412-0.34v-1.1l2.646,2.633L8.938,8.67z M14.389,7.107c-0.34-0.18-0.662,0.244-0.424,0.529c0.416,0.493,0.644,1.118,0.644,1.762c0,1.515-1.272,2.747-2.798,2.747c-0.029,0-0.061,0-0.089-0.002v-1.631c0-0.354-0.382-0.419-0.558-0.246l-3.482,3.465c-0.136,0.136-0.136,0.355,0,0.49l3.482,3.465c0.189,0.186,0.568,0.096,0.568-0.245v-1.533c0.153,0.016,0.331,0.022,0.484,0.022c2.592,0,4.7-2.098,4.7-4.677C16.917,9.506,15.948,7.917,14.389,7.107 M12.217,15.238c-0.251,0-0.501-0.022-0.743-0.069c-0.212-0.039-0.411,0.125-0.411,0.341v1.101l-2.646-2.634l2.646-2.633v1.116c0,0.174,0.126,0.318,0.295,0.343c0.158,0.024,0.318,0.034,0.486,0.034c1.905,0,3.456-1.542,3.456-3.438c0-0.271-0.032-0.541-0.097-0.804c0.648,0.719,1.022,1.659,1.022,2.66C16.226,13.451,14.428,15.238,12.217,15.238"></path>
-            </svg>]]
-      html = html..[[</svg>]]
-      screenObject.screen.addContent(0, 0, html)
+
+      --      screenObject.screen.addContent(0, 0, html)
 
 
     else
@@ -685,5 +1326,5 @@ end
 for _,screenObject in ipairs(screens) do
   screenObject.screen.clear()
 end
-generateHtml()
+--generateHtml()
 unit.setTimer('updateTable', 1)
