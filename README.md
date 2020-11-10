@@ -78,3 +78,5 @@ Names of pure containers:
  
  
  Aditionally you might want to check lua variabels and modify couple main ones which are responsible for calculating container sizes. Right click PB -> Advanced -> Edit Lua parameters
+ 
+ Known issues: In case you have max amount of screens connected to one PB you might encounter issue with it using to much of CPU for initialization. This is only issue if all of them shows maximum amount of information. Work around would be to start by using only couple screens, set them to your needs and then connect rest of them
