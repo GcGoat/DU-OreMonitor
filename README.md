@@ -28,6 +28,7 @@ PB Setup:
 
 Container setup:
 - For containers to be properly recognized you will need to rename them. Ore containers can only contain one type of ore and its name should reflect its contents, for example bauxite container needs to have name as **Bauxite Ore** and gold one shopuld be as **Gold nuggets Ore**
+**NOTE!** If you have container hub, name it in same way as you would a regular container and then you will need to set correct value in lue variable editor to match its size, as we have no way to determine how big it is throw code.
 
 Names of ore containers:
  - Bauxite Ore
