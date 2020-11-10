@@ -574,15 +574,15 @@ function generateLine(startingY, startingX, ore, percent, mass, invert, rightSid
   end
 
   if single then
-    --    if percent > 0 then
-    line = line..[[<rect class ="pBar bgc]]..colorBMode..[[" x="]]..math.floor(startingX - barWidthBig -5)..[[" y="]]..math.floor(5+(startingY)-barHeightBig)..[[" height="]]..barHeightBig..[[" width="]]..math.floor(percent * barWidthBig / 100)..[[" style="fill:#]]..barGraphColor(percent, invert, colorMode)..[[;"/>]]
-    --    end
+    if percent > 0 then
+      line = line..[[<rect class ="pBar bgc]]..colorBMode..[[" x="]]..math.floor(startingX - barWidthBig -5)..[[" y="]]..math.floor(5+(startingY)-barHeightBig)..[[" height="]]..barHeightBig..[[" width="]]..math.floor(percent * barWidthBig / 100)..[[" style="fill:#]]..barGraphColor(percent, invert, colorMode)..[[;"/>]]
+    end
     line = line..[[<text class ="FSBM bt]]..colorTMode..[[" x="]]..math.floor(startingX-barWidthBig)..[[" y="]]..math.floor(startingY-2)..[[">]]..percent..[[%</text>]]
     line = line..[[<text class ="FSBME bt]]..colorTMode..[[" x="]]..math.floor(startingX - 6)..[[" y="]]..math.floor(startingY-2)..[[">]]..mass..[[KL</text>]]
   else
-    --    if percent > 0 then
-    line = line..[[<rect class ="pBar bgc]]..colorBMode..[[" x="]]..math.floor(startingX - barWidth -5)..[[" y="]]..math.floor(5+(startingY)-barHeight)..[[" height="]]..barHeight..[[" width="]]..math.floor(percent * barWidth / 100)..[[" style="fill:#]]..barGraphColor(percent, invert, colorMode)..[[;"/>]]
-    --    end
+    if percent > 0 then
+      line = line..[[<rect class ="pBar bgc]]..colorBMode..[[" x="]]..math.floor(startingX - barWidth -5)..[[" y="]]..math.floor(5+(startingY)-barHeight)..[[" height="]]..barHeight..[[" width="]]..math.floor(percent * barWidth / 100)..[[" style="fill:#]]..barGraphColor(percent, invert, colorMode)..[[;"/>]]
+    end
     line = line..[[<text class ="FSM bt]]..colorTMode..[[" x="]]..math.floor(startingX-barWidth)..[[" y="]]..math.floor(startingY-2)..[[">]]..percent..[[%</text>]]
     line = line..[[<text class ="FSME bt]]..colorTMode..[[" x="]]..math.floor(startingX - 6)..[[" y="]]..math.floor(startingY-2)..[[">]]..mass..[[KL</text>]]
   end
@@ -1328,3 +1328,6 @@ for _,screenObject in ipairs(screens) do
 end
 --generateHtml()
 unit.setTimer('updateTable', 1)
+
+
+
