@@ -1,5 +1,5 @@
 -- unit needs to have 2 filters: timer, start()
--- for timer filter set its name as updateTable and inside needs to contain generateHtml()
+-- for timer filter set its name as updateTable and inside needs to contain generateHtml(true)
 -- start filter needs to contain all of this code
 
 
@@ -650,7 +650,7 @@ function evaluateButtons(x, y, pressDown, unit)
           end
           screenObject.settings.generatebackground = true
         end
-        generateHtml()
+        generateHtml(false)
         break
       end
 
@@ -659,7 +659,7 @@ function evaluateButtons(x, y, pressDown, unit)
         screenObject.settingsButton.y <= y and screenObject.settingsButton.y+ screenObject.settingsButton.size >= y and not pressDown then
         screenObject.settings.renderSettings = not screenObject.settings.renderSettings
         screenObject.settings.generatebackground = true
-        generateHtml()
+        generateHtml(false)
         break
       end
 
@@ -684,7 +684,7 @@ function evaluateButtons(x, y, pressDown, unit)
             databank.setIntValue(screenObject.slot.."_barColorMode"..screenObject.showTier, colorMode)
             screenObject.settings.generatebackground = true
           end
-          generateHtml()
+          generateHtml(false)
           break
         end
 
@@ -708,7 +708,7 @@ function evaluateButtons(x, y, pressDown, unit)
             databank.setIntValue(screenObject.slot.."_barBColorMode"..screenObject.showTier, colorMode)
             screenObject.settings.generatebackground = true
           end
-          generateHtml()
+          generateHtml(false)
           break
         end
 
@@ -732,7 +732,7 @@ function evaluateButtons(x, y, pressDown, unit)
             databank.setIntValue(screenObject.slot.."_barTColorMode"..screenObject.showTier, colorMode)
             screenObject.settings.generatebackground = true
           end
-          generateHtml()
+          generateHtml(false)
           break
         end
 
@@ -756,7 +756,7 @@ function evaluateButtons(x, y, pressDown, unit)
             databank.setIntValue(screenObject.slot.."_barMColorMode"..screenObject.showTier, colorMode)
             screenObject.settings.generatebackground = true
           end
-          generateHtml()
+          generateHtml(false)
           break
         end
 
@@ -780,7 +780,7 @@ function evaluateButtons(x, y, pressDown, unit)
             databank.setIntValue(screenObject.slot.."_background"..screenObject.showTier, colorMode)
             screenObject.settings.generatebackground = true
           end
-          generateHtml()
+          generateHtml(false)
           break
         end
 
@@ -826,7 +826,7 @@ function evaluateButtons(x, y, pressDown, unit)
           end
 
           saveAll()
-          generateHtml()
+          generateHtml(false)
           break
         end
 
@@ -853,7 +853,7 @@ function evaluateButtons(x, y, pressDown, unit)
           end
 
           screenObject.settings.generatebackground = true
-          generateHtml()
+          generateHtml(false)
           break
         end
       end
@@ -888,7 +888,7 @@ function evaluateButtons(x, y, pressDown, unit)
 
       if screenObject.showTier ~= oldTier then
         screenObject.settings.generatebackground = true
-        generateHtml()
+        generateHtml(false)
       end
 
     end
@@ -923,8 +923,14 @@ function optionColorButton(colormode, fill, border, button, y)
   return bhtml
 end
 
+counter = 0
 
-function generateHtml()
+function generateHtml(auto)
+
+  if auto then
+    counter  = counter + 1
+  end
+
 
   for id,screenObject in ipairs(screens) do
 
@@ -1310,15 +1316,26 @@ function generateHtml()
 
     if screenObject.oreContentId == nill then
       screenObject.oreContentId = screenObject.screen.addContent(0, 0, html)
-
-
-
-
-      --      screenObject.screen.addContent(0, 0, html)
-
-
     else
       screenObject.screen.resetContent(screenObject.oreContentId, html)
+    end
+
+
+
+    thtml = [[<svg width="100vw" height="100vh" viewBox="0 0 ]]..screenWidth..[[ ]]..screenHeight..[[" xmlns="http://www.w3.org/2000/svg">]]
+
+    if counter % 2 == 0 then
+      thtml = thtml..[[<circle cx="99%" cy="99%" r="0.5%" style="fill:#47a156; fill-opacity:0.8;"></circle>]]
+    else
+      thtml = thtml..[[<circle cx="99%" cy="99%" r="0.5%" style="fill:#47a156; fill-opacity:0.3;"></circle>]]
+    end
+
+    thtml =  thtml..[[</svg>]]
+
+    if screenObject.tickContentId == nill then
+      screenObject.tickContentId = screenObject.screen.addContent(0, 0, thtml)
+    else
+      screenObject.screen.resetContent(screenObject.tickContentId, thtml)
     end
 
   end
@@ -1328,6 +1345,3 @@ for _,screenObject in ipairs(screens) do
 end
 --generateHtml()
 unit.setTimer('updateTable', 1)
-
-
-
