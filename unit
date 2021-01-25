@@ -41,17 +41,21 @@ function ContainerMaxVol(hp)
   elseif hp > 123 and hp <= 998 then vol = (1000+(1000*(containerProficiency/100)))
   elseif hp > 998 and hp <= 7996 then vol = (8000+(8000*(containerProficiency/100)))
   elseif hp > 7996 and hp <= 17315 then vol = (64000+(64000*(containerProficiency/100)))
-  elseif hp > 17315 then vol = (128000+(128000*(containerProficiency/100)))
+  elseif hp > 17315 and hp <= 34632 then vol = (128000+(128000*(containerProficiency/100)))
+  elseif hp > 34632 and hp <= 69266 then vol = (256000+(256000*(containerProficiency/100)))
+  elseif hp > 69266 then vol = (512000+(512000*(containerProficiency/100)))
   end
   return vol
 end
 
 function ContainerSelfMass(hp)
-  if hp > 49 and hp <=123 then sm = 0
+  if hp > 49 and hp <= 123 then sm = 0
   elseif hp > 123 and hp <= 998 then sm = 229.09
   elseif hp > 998 and hp <= 7996 then sm = 1280
-  elseif hp > 7996 and hp <= 17315 then sm = 7420
-  elseif hp > 17315 then sm = 14840
+  elseif hp > 7996 and hp <= 17315 then sm = 7420  
+  elseif hp > 17315 and hp <= 34632 then  sm = 14840
+  elseif hp > 34632 and hp <= 69266 then  sm = 44210
+  elseif hp > 69266 then  sm = 88410    
   end
   return sm
 end
@@ -69,18 +73,18 @@ end
 addPure({name = "Oxygen", tier = 1, weight = 1})
 addPure({name = "Hydrogen", tier = 1, weight = 0.07})
 
-addOre({name = "Bauxite", tier = 1, weight = 1.28, into = {name = "Aluminium", weight = 2.65}})
-addOre({name = "Coal", tier = 1, weight = 1.35, into = {name = "Carbon", weight = 2.27}})
+addOre({name = "Bauxite", tier = 1, weight = 1.281, into = {name = "Aluminium", weight = 2.7}})
+addOre({name = "Coal", tier = 1, weight = 1.346, into = {name = "Carbon", weight = 2.27}})
 addOre({name = "Hematite", tier = 1, weight = 5.04,  into = {name = "Iron", weight = 7.85}})
 addOre({name = "Quartz", tier = 1, weight = 2.65,  into = {name = "Silicon", weight = 2.33}})
 
 addOre({name = "Chromite", tier = 2, weight = 4.54,  into = {name = "Chromium", weight = 7.19}})
 addOre({name = "Malachite", tier = 2, weight = 4.00,  into = {name = "Copper", weight = 8.96}})
-addOre({name = "Limestone", tier = 2, weight = 2.71,  into = {name = "Calcium", weight = 1.55}})
+addOre({name = "Limestone", tier = 2, weight = 2.711,  into = {name = "Calcium", weight = 1.55}})
 addOre({name = "Natron", tier = 2, weight = 1.55,  into = {name = "Sodium", weight = 0.97}})
 
 addOre({name = "Garnierite", tier = 3, weight = 2.60,  into = {name = "Nickel", weight = 8.91}})
-addOre({name = "Petalite", tier = 3, weight = 2.41,  into = {name = "Lithium", weight = 0.53}})
+addOre({name = "Petalite", tier = 3, weight = 2.412,  into = {name = "Lithium", weight = 0.53}})
 addOre({name = "Acanthite", tier = 3, weight = 7.20,  into = {name = "Silver", weight = 10.49}})
 addOre({name = "Pyrite", tier = 3, weight = 5.01,  into = {name = "Sulfur", weight = 1.82}})
 
@@ -524,7 +528,7 @@ function generateLine(startingY, startingX, ore, percent, mass, invert, rightSid
       end
     end
 
-  else
+  else 
     if textOnTop then
       if screenObject.settings.generatebackground then
         background = [[<text class="mainText mainTextMiddle bmcolor]]..colorMMode..[[" y="]]..(startingY-7)..[[" x="]]..math.floor(startingX - barWidth/2)..[[">]]..ore.name..[[</text>]]
@@ -899,7 +903,7 @@ function getMass(element)
   mass = 0
   maxVol = 0
   for _,container in ipairs(element.containers) do
-    mass = mass+round(math.ceil((OptimizedContainerMass(core.getElementMassById(container.id)) - container.selfMass) / element.weight), 1)
+    mass = mass+round(((OptimizedContainerMass(core.getElementMassById(container.id)) - container.selfMass) / element.weight), 2)
     maxVol = maxVol + container.maxVol
   end
   return mass, maxVol
