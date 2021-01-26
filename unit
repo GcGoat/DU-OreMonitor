@@ -4,9 +4,13 @@
 
 
 hub = 1075400 --export: This is the total volume of your hub, at present, all hubs need to be the same
-containerProficiency = 20 --export: This is the % voume increase of your Container Proficiency talent
+containerProficiency = 20 --export: This is the % volume increase of your Container Proficiency talent
 containerOptimization = 0 --export: This is the % mass decrease of your Container Optimization talent
 
+scanBatch = 700 --export: Amount of elements to be scanned in one batch. Default: 700
+scanInterval =  0.1 --export: Interval between scans. Default: 0.1
+
+iHaveAll = true --export: Enable when you have all. Default: 700
 
 sortedOres = {}
 ores = {}
@@ -16,10 +20,10 @@ screens = {}
 core = nil
 databank = nill
 
-fontBigSize = "90px"
-fontSize = "50px"
-fontSizeBigMini = "60px"
-fontSizeMini = "40px"
+fontBigSize = 75
+fontSize = 50
+fontSizeBigMini = 60
+fontSizeMini = 40
 
 barWidth = 290
 barWidthBig = 450
@@ -52,10 +56,10 @@ function ContainerSelfMass(hp)
   if hp > 49 and hp <= 123 then sm = 0
   elseif hp > 123 and hp <= 998 then sm = 229.09
   elseif hp > 998 and hp <= 7996 then sm = 1280
-  elseif hp > 7996 and hp <= 17315 then sm = 7420  
+  elseif hp > 7996 and hp <= 17315 then sm = 7420
   elseif hp > 17315 and hp <= 34632 then  sm = 14840
   elseif hp > 34632 and hp <= 69266 then  sm = 44210
-  elseif hp > 69266 then  sm = 88410    
+  elseif hp > 69266 then  sm = 88410
   end
   return sm
 end
@@ -125,7 +129,6 @@ for key, value in pairs(unit) do
         end
         screens[#screens].settings.tierSettings[-1] = {barTColorMode = 6}
 
-
       elseif value.getElementClass() == "CoreUnitStatic" then
         core = value
       elseif value.getElementClass() == "DataBankUnit" then
@@ -194,25 +197,53 @@ end
 
 elementsIds = core.getElementIdList()
 
-for i = 1, #elementsIds do
-  local name = string.lower(core.getElementNameById(elementsIds[i]))
-  if string.match(core.getElementTypeById(elementsIds[i]), "ontainer") and (string.match(name," ore") or string.match(name,"pure ")) then
-    local got = ores[name]
-    if got == nil then
-      got = pures[name]
+fullyScanned = false
+scanned = 1
+
+function scanContainers()
+  tempCount = 0
+  found = false
+
+  for i = scanned, #elementsIds do
+    tempCount = tempCount + 1
+    if tempCount > scanBatch then
+      break
     end
-    if got ~= nil then
+    scanned = scanned + 1
 
-      if got.containers == nill then
-        got.containers = {}
+    local name = string.lower(core.getElementNameById(elementsIds[i]))
+    if string.match(core.getElementTypeById(elementsIds[i]), "ontainer") and (string.match(name," ore") or string.match(name,"pure ")) then
+      local got = ores[name]
+      if got == nil then
+        got = pures[name]
       end
+      if got ~= nil then
 
-      hitPoints = core.getElementMaxHitPointsById(elementsIds[i])
+        if got.containers == nill then
+          got.containers = {}
+        end
 
-      got.containers[#got.containers+1] = {id = elementsIds[i], hitPoints = hitPoints, selfMass = ContainerSelfMass(hitPoints), maxVol = ContainerMaxVol(hitPoints)}
+        hitPoints = core.getElementMaxHitPointsById(elementsIds[i])
+
+        got.containers[#got.containers+1] = {id = elementsIds[i], hitPoints = hitPoints, selfMass = ContainerSelfMass(hitPoints), maxVol = ContainerMaxVol(hitPoints)}
+
+        found = true
+      end
     end
   end
+
+  if found then
+    for _,screenObject in ipairs(screens) do
+      screenObject.settings.generatebackground = true
+    end
+  end
+
+  if scanned > #elementsIds then
+    fullyScanned = true
+  end
 end
+
+scanContainers()
 
 
 function OptimizedContainerMass(mass)
@@ -368,7 +399,7 @@ function updateStyle(screenObject)
     
     .mainText {
       font-weight: bold;
-      font-size: ]]..fontSize..[[;
+      font-size: ]]..fontSize..[[px;
       fill: #EBEEEE;
       stroke: #3a3939;
       stroke-width: 2;
@@ -376,7 +407,7 @@ function updateStyle(screenObject)
       
     .colorMode {
       font-weight: bold;
-      font-size: ]]..fontSize..[[;
+      font-size: ]]..fontSize..[[px;
       fill: white;
       stroke: #3a3939;
       stroke-width: 10;
@@ -385,21 +416,21 @@ function updateStyle(screenObject)
     
     .mainBigText {
       font-weight: bold;
-      font-size: ]]..fontBigSize..[[;
+      font-size: ]]..fontBigSize..[[px;
       fill: #EBEEEE;
     }
     .FSBM {
-      font-size: ]]..fontSizeBigMini..[[;
+      font-size: ]]..fontSizeBigMini..[[px;
     }
     .FSBME {
-      font-size: ]]..fontSizeBigMini..[[;
+      font-size: ]]..fontSizeBigMini..[[px;
       text-anchor: end;
     }
     .FSM {
-      font-size: ]]..fontSizeMini..[[;
+      font-size: ]]..fontSizeMini..[[px;
     }
     .FSME {
-      font-size: ]]..fontSizeMini..[[;
+      font-size: ]]..fontSizeMini..[[px;
       text-anchor: end;
     }
     .mainTextRight {
@@ -521,14 +552,14 @@ function generateLine(startingY, startingX, ore, percent, mass, invert, rightSid
     else
       if screenObject.settings.generatebackground then
         if rightSide then
-          background = [[<text class="mainBigText bmcolor]]..colorMMode..[[" y="]]..(startingY)..[[" x="]]..(startingX)..[[">]]..ore.name..[[</text>]]
+          background = [[<text class="mainBigText bmcolor]]..colorMMode..[[" y="]]..(startingY-(fontBigSize/5))..[[" x="]]..(startingX)..[[">]]..ore.name..[[</text>]]
         else
-          background = [[<text class="mainBigText mainTextRight bmcolor]]..colorMMode..[[" y="]]..(startingY)..[[" x="]]..(startingX - barWidthBig - 10)..[[">]]..ore.name..[[</text>]]
+          background = [[<text class="mainBigText mainTextRight bmcolor]]..colorMMode..[[" y="]]..(startingY-(fontBigSize/5))..[[" x="]]..(startingX - barWidthBig - 10)..[[">]]..ore.name..[[</text>]]
         end
       end
     end
 
-  else 
+  else
     if textOnTop then
       if screenObject.settings.generatebackground then
         background = [[<text class="mainText mainTextMiddle bmcolor]]..colorMMode..[[" y="]]..(startingY-7)..[[" x="]]..math.floor(startingX - barWidth/2)..[[">]]..ore.name..[[</text>]]
@@ -581,14 +612,14 @@ function generateLine(startingY, startingX, ore, percent, mass, invert, rightSid
     if percent > 0 then
       line = line..[[<rect class ="pBar bgc]]..colorBMode..[[" x="]]..math.floor(startingX - barWidthBig -5)..[[" y="]]..math.floor(5+(startingY)-barHeightBig)..[[" height="]]..barHeightBig..[[" width="]]..math.floor(percent * barWidthBig / 100)..[[" style="fill:#]]..barGraphColor(percent, invert, colorMode)..[[;"/>]]
     end
-    line = line..[[<text class ="FSBM bt]]..colorTMode..[[" x="]]..math.floor(startingX-barWidthBig)..[[" y="]]..math.floor(startingY-2)..[[">]]..percent..[[%</text>]]
-    line = line..[[<text class ="FSBME bt]]..colorTMode..[[" x="]]..math.floor(startingX - 6)..[[" y="]]..math.floor(startingY-2)..[[">]]..mass..[[KL</text>]]
+    line = line..[[<text class ="FSBM bt]]..colorTMode..[[" x="]]..math.floor(startingX-barWidthBig+10)..[[" y="]]..math.floor(startingY-(fontSizeBigMini/3))..[[">]]..percent..[[%</text>]]
+    line = line..[[<text class ="FSBME bt]]..colorTMode..[[" x="]]..math.floor(startingX - 15)..[[" y="]]..math.floor(startingY-(fontSizeBigMini/3))..[[">]]..mass..[[KL</text>]]
   else
     if percent > 0 then
       line = line..[[<rect class ="pBar bgc]]..colorBMode..[[" x="]]..math.floor(startingX - barWidth -5)..[[" y="]]..math.floor(5+(startingY)-barHeight)..[[" height="]]..barHeight..[[" width="]]..math.floor(percent * barWidth / 100)..[[" style="fill:#]]..barGraphColor(percent, invert, colorMode)..[[;"/>]]
     end
-    line = line..[[<text class ="FSM bt]]..colorTMode..[[" x="]]..math.floor(startingX-barWidth)..[[" y="]]..math.floor(startingY-2)..[[">]]..percent..[[%</text>]]
-    line = line..[[<text class ="FSME bt]]..colorTMode..[[" x="]]..math.floor(startingX - 6)..[[" y="]]..math.floor(startingY-2)..[[">]]..mass..[[KL</text>]]
+    line = line..[[<text class ="FSM bt]]..colorTMode..[[" x="]]..math.floor(startingX-barWidth+10)..[[" y="]]..math.floor(startingY-(fontSizeMini/3))..[[">]]..percent..[[%</text>]]
+    line = line..[[<text class ="FSME bt]]..colorTMode..[[" x="]]..math.floor(startingX - 15)..[[" y="]]..math.floor(startingY-(fontSizeMini/3))..[[">]]..mass..[[KL</text>]]
   end
   return line, background
 end
@@ -838,9 +869,12 @@ function evaluateButtons(x, y, pressDown, unit)
         if screenObject.resetButton.sizeY ~= nill then
           width = screenObject.resetButton.sizeY
         end
-        if screenObject.resetButton.x <= x and screenObject.resetButton.x+ screenObject.resetButton.size >= x and
-          screenObject.resetButton.y <= y and screenObject.resetButton.y+ screenObject.resetButton.width >= y and not pressDown then
-
+        if (screenObject.resetButton.x <= x) then
+          system.print("reset0 "..screenObject.resetButton.x.." "..x .. " ")
+        end
+        if screenObject.resetButton.x <= x and screenObject.resetButton.x+ screenObject.resetButton.sizeY >= x and
+          screenObject.resetButton.y <= y and screenObject.resetButton.y+ screenObject.resetButton.size >= y and not pressDown then
+          system.print("reset1")
           for i = -1, 5 do
             screenObject.settings.tierSettings[i] = {}
           end
@@ -935,7 +969,6 @@ function generateHtml(auto)
     counter  = counter + 1
   end
 
-
   for id,screenObject in ipairs(screens) do
 
     startingY = 0
@@ -1023,6 +1056,27 @@ function generateHtml(auto)
         if screenObject.settings.generatebackground then
           screenObject.tiers[0] = {x1 = screenWidth/2 - (barWidth* 1.3), x2 = screenWidth/2 + (barWidth* 1.3), y1 = startingY -5, y2 = startingY + barHeight}
         end
+      elseif  iHaveAll then
+
+        local pure = oxygen
+
+
+        oxyY = startingY + lineGap
+        if single then
+          if not screenObject.settings.verticalView then
+            oxyY = startingY - lineGap
+          end
+        end
+
+        mainhtml, backc = generateLine(oxyY, screenWidth/2, pure, 0, 0, true, false, single, screenObject, single, 0)
+        html = html..mainhtml
+
+        bhtml = bhtml..backc
+
+        if screenObject.settings.generatebackground then
+          screenObject.tiers[0] = {x1 = screenWidth/2 - (barWidth* 1.3), x2 = screenWidth/2 + (barWidth* 1.3), y1 = startingY -5, y2 = startingY + barHeight}
+        end
+
       end
 
       hydrogen = pures[string.lower("Pure Hydrogen")]
@@ -1045,6 +1099,30 @@ function generateHtml(auto)
         end
 
         mainhtml, backc = generateLine(oxyY, centerPoint, pure, percentPure, massPure, true, true, single, screenObject, single, 0)
+
+        html = html..mainhtml
+
+        bhtml = bhtml..backc
+
+        if screenObject.settings.generatebackground then
+          screenObject.tiers[0] = {x1 = screenWidth/2 - (barWidth* 1.3), x2 = screenWidth/2 + (barWidth* 1.3), y1 = startingY -5, y2 = startingY + barHeight}
+        end
+      elseif  iHaveAll then
+        local pure = hydrogen
+
+        centerPoint = screenWidth/2+barWidth+10
+        if single then
+          centerPoint = screenWidth/2+barWidthBig+10
+        end
+
+        oxyY = startingY + lineGap
+        if single then
+          if not screenObject.settings.verticalView then
+            oxyY = startingY - lineGap
+          end
+        end
+
+        mainhtml, backc = generateLine(oxyY, centerPoint, pure, 0, 0, true, true, single, screenObject, single, 0)
 
         html = html..mainhtml
 
@@ -1085,7 +1163,7 @@ function generateHtml(auto)
 
 
     for k, ore in pairs(sortedOres) do
-      if (ore.containers ~= nil or ore.into.containers ~= nil) and (screenObject.showTier == -1 or ore.tier == screenObject.showTier) then
+      if (ore.containers ~= nil or ore.into.containers ~= nil or iHaveAll) and (screenObject.showTier == -1 or ore.tier == screenObject.showTier) then
 
 
 
@@ -1151,25 +1229,28 @@ function generateHtml(auto)
 
 
         if ore.containers ~= nil then
-
           if single then
             centerPoint = screenWidth/2
           end
-
           massOre, maxVol = getMass(ore)
           percentOre = math.ceil((math.ceil((massOre * 1000) - 0.5) / maxVol)*100)
-
           local mainhtml, back = generateLine(startingY, centerPoint, ore, percentOre, massOre, false, false, textOnTop, screenObject, single, tier)
-
           html = html..mainhtml
-
+          if screenObject.settings.generatebackground then
+            bhtml = bhtml..back
+          end
+        elseif iHaveAll then
+          if single then
+            centerPoint = screenWidth/2
+          end
+          local mainhtml, back = generateLine(startingY, centerPoint, ore, 0, 0, false, false, textOnTop, screenObject, single, tier)
+          html = html..mainhtml
           if screenObject.settings.generatebackground then
             bhtml = bhtml..back
           end
         end
 
         if ore.into.containers ~= nil then
-
           local pure = ore.into
           massPure, maxVol = getMass(pure)
           percentPure = math.ceil(((math.ceil((massPure * 1000) - 0.5) / maxVol)*100))
@@ -1184,8 +1265,21 @@ function generateHtml(auto)
           if screenObject.settings.generatebackground then
             bhtml = bhtml..back
           end
+        elseif iHaveAll then
+          local pure = ore.into
+          center = centerPoint+barWidth+10
+          if single then
+            center = screenWidth/2 + barWidthBig+10
+          end
+          mainhtml, back = generateLine(startingY,center, pure, 0, 0, false, true, textOnTop, screenObject, single, tier)
+          html = html..mainhtml
+
+          if screenObject.settings.generatebackground then
+            bhtml = bhtml..back
+          end
 
         end
+
         if not screenObject.settings.verticalView then
           startingY = startingY + lineGap
         end
@@ -1349,3 +1443,4 @@ for _,screenObject in ipairs(screens) do
 end
 --generateHtml()
 unit.setTimer('updateTable', 1)
+unit.setTimer('scanner', 0.1)
