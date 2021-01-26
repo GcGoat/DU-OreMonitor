@@ -1,0 +1,3 @@
+if not fullyScanned then
+  scanContainers()
+end
